@@ -22,22 +22,20 @@ library(data.table)
 library(RNetCDF)
 
 ####    Variables    ####
-FROM   <- "https://www.ncei.noaa.gov/data/total-solar-irradiance/access/daily/"
-DEST   <- "~/DATA/SUN/TSI_model_NOAA/"
-OUTPUT <- paste0(sub("/$","",DEST),".Rds")
+source("~/TSI/DEFINITIONS.R")
 
 
 ####    Get data    ####
-system(paste("wget -N -r -np -nd -nH -A .nc -P", DEST, FROM))
+system(paste("wget -N -r -np -nd -nH -A .nc -P", DEST_NOAA, FROM_NOAA))
 
 
 ####    Check if we have to parse    ####
-ncfiles <- list.files(path       = DEST,
+ncfiles <- list.files(path       = DEST_NOAA,
                       pattern    = "*.nc",
                       recursive  = T,
                       full.names = T )
 
-if (!file.exists(OUTPUT) | file.mtime(OUTPUT) < max(file.mtime(ncfiles))) {
+if (!file.exists(OUTPUT_NOAA) | file.mtime(OUTPUT_NOAA) < max(file.mtime(ncfiles))) {
     cat("New data to parse!\n")
 } else {
     cat("NO new data to parse!\n")
@@ -79,7 +77,7 @@ hist( gather$TSI )
 plot(gather$time, gather$TSI, pch = ".")
 
 myRtools::write_RDS(object = gather,
-                    file   = OUTPUT  )
+                    file   = OUTPUT_NOAA  )
 
 tac <- Sys.time()
 cat(sprintf("%s %s@%s %s %f mins\n\n",Sys.time(),Sys.info()["login"],Sys.info()["nodename"],Script.Name,difftime(tac,tic,units="mins")))

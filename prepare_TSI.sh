@@ -14,12 +14,14 @@ exec 2> >(tee -i "${ERR_FILE}" >&2)
 info "START :: $0 :: $* ::"
 
 
+info "Read raw files to SIG"
+Rscript "$(dirname "$0")/TSI_get_NOAA.R"
 
-sleep 1
+
 
 
 
 
 ## end coding
 printf "%s %-10s %-10s %-50s %f\n" "$(date +"%F %H:%M:%S")" "$HOSTNAME" "$USER" "$(basename $0)" "$SECONDS"
-exit 0 
+exit 0
