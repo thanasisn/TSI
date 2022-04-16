@@ -32,9 +32,9 @@ source("~/TSI/DEFINITIONS.R")
 ####    Check if need to run    ####
 
 
-if ( !file.exists(OUTPUT_NOAA_LAP) |
-     file.mtime(ASTROPYdb)   > file.mtime(OUTPUT_NOAA_LAP) |
-     file.mtime(OUTPUT_NOAA) > file.mtime(OUTPUT_NOAA_LAP) ) {
+if ( !file.exists(OUTPUT_TSIS_LAP) |
+     file.mtime(ASTROPYdb)   > file.mtime(OUTPUT_TSIS_LAP) |
+     file.mtime(OUTPUT_TSIS) > file.mtime(OUTPUT_TSIS_LAP) ) {
     cat("New data to parse\n\n")
 } else {
     cat("NO new data to parse\n\n")
@@ -45,14 +45,10 @@ if ( !file.exists(OUTPUT_NOAA_LAP) |
 
 ## Load data
 ASTROPY_data <- data.table(readRDS(ASTROPYdb))
-NOAA_data    <- data.table(readRDS(OUTPUT_NOAA))
+TSIS_data    <- data.table(readRDS(OUTPUT_TSIS))
 
 ASTROPY_data <- ASTROPY_data[ Date > TSI_START ]
-NOAA_data    <- NOAA_data[    time > TSI_START ]
-
-NOAA_data[, file     := NULL ]
-NOAA_data[, time_low := NULL ]
-NOAA_data[, time_upp := NULL ]
+TSIS_data    <- TSIS_data[    Date > TSI_START ]
 
 
 plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l")
@@ -61,8 +57,8 @@ plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l")
 #' #### Interpolate TSI measurements to our dates ####
 #' Make functions from TSI measurements to match out data.
 #' Interpolate between measurements only.
-tsi_fun <- approxfun(x      = NOAA_data$time,
-                     y      = NOAA_data$TSI,
+tsi_fun <- approxfun(x      = TSIS_data$Date,
+                     y      = TSIS_data$tsi_1au,
                      method = "linear",
                      rule   = 1,
                      ties   = mean )
@@ -71,15 +67,15 @@ tsi_fun <- approxfun(x      = NOAA_data$time,
 cat("Interpolate between measurements\n")
 
 
-unc_fuc <- approxfun(x      = NOAA_data$time,
-                     y      = NOAA_data$TSI_UNC,
+unc_fuc <- approxfun(x      = TSIS_data$Date,
+                     y      = TSIS_data$measurement_uncertainty_1au,
                      method = "linear",
                      rule   = 1,
                      ties   = mean )
 
 
 
-#' Interpolate the data, we have assumed that dates from Astropy are complete (we made them).
+#' Interpolate the data, we have assumed that dates from Astropy are complete.
 tsi_all      <- tsi_fun( ASTROPY_data$Date )
 unc_all      <- unc_fuc( ASTROPY_data$Date )
 
@@ -99,7 +95,7 @@ tsi_comb <- data.frame(
 
 #' #### Output data for use ####
 myRtools::write_RDS(object = tsi_comb,
-                    file   = OUTPUT_NOAA_LAP  )
+                    file   = OUTPUT_TSIS_LAP  )
 
 
 panderOptions("table.style", 'rmarkdown')
