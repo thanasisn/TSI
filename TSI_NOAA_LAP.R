@@ -62,33 +62,18 @@ NOAA_data[, time_low := NULL ]
 NOAA_data[, time_upp := NULL ]
 
 
+plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l")
+
 
 #+ include=FALSE
 
 stop()
 
-#' ##### Test if the sun is on (zero measurements may occur) #####
-####  Subset to project dates  ####
-data  <- data[data$time > TSI_START,]
 
-####  Remove invalid records
-lower_tsi_limit <- min(mean(data$TSI), median(data$TSI)) * 0.70
-data            <- data[ data$TSI > lower_tsi_limit, ]
-
-
-#+ include=FALSE
-
-
-
-####  Extend measurements until today  ####
-## use last measurement date and time step from origin
-# timestep        = tsi_df$nominal_date_jdn[100] - tsi_df$nominal_date_jdn[99]
-# last_measu_date = max(tsi_df$nominal_date_jdn) + timestep
-
-#' #### Interpolate TSI measurements to our data ####
+#' #### Interpolate TSI measurements to our dates ####
 #' Make functions from TSI measurements to match out data.
 #' Interpolate between measurements and extend tails as closest constant.
-tsi_fun <- approxfun(x      = data$time,
+tsi_fun <- approxfun(x      = NOAA_data$tim,
                      y      = data$TSI,
                      method = "linear",
                      rule   = 2,
