@@ -7,9 +7,6 @@
 #' institute: "AUTH"
 #' affiliation: "Laboratory of Atmospheric Physics"
 #' abstract: "Read original total solar irradiance data from SORCE
-#'            use sorce_tsi_L3_c06h file to create a R data.frame
-#'            corresponding to the originals and sub-setting to CHP1 data.
-#'            TSI measurements are extended to present day by using
 #'            last measurement as the Solar Constant."
 #' output:
 #'   html_document:
@@ -22,7 +19,7 @@
 
 #+ include=FALSE
 ####  Clean environment  -------------------------------------------------------
-# rm(list = (ls()[ls() != ""]))
+rm(list = (ls()[ls() != ""]))
 Sys.setenv(TZ = "UTC")
 tic <- Sys.time()
 Script.Name <- tryCatch({ funr::sys.script() },
@@ -52,146 +49,99 @@ library(data.table)
 source("~/TSI/DEFINITIONS.R")
 
 
-#' #### Load Astropy prebuild sun distance data ####
-ASTROPY_data <- readRDS(paste0(astropy_db,".Rds"))
-#+ include=FALSE
-
-####  Function to convert Julian date number to POSIXct  -----------------------
-## Accepts a vector of jdn dates and return POSIXct vector
-## it is not a general Julian date converter due to different
-## Julian date specs
-jd2posixct <- function(jdn) {
-    times_hrs = (( jdn - 0.5 ) %% 1 ) * 24
-    times_min = ( times_hrs    %% 1 ) * 60
-    times_sec = ( times_min    %% 1 ) * 60
-    str_dates = format.jd(jdn, "%F %T")
-    str_times = sprintf("%02d:%02d:%02d", as.integer(times_hrs), as.integer(times_min), as.integer(times_sec))
-    dates     = as.POSIXct(paste(str_dates, str_times),tz = "UTC")
-    return(dates)
-}
-
-
-#+ include=FALSE
-##    SORCE data preparation ####
-
-#'
-#' ## SORCE data preparation
-#'
-#' #### Get raw TSI data from file
-#'
-#' sorce has been discontinued !!
-#'
-sun_data  <- read.table(sorce_tsi, comment.char = ";")
-#+ include=FALSE
-
-
-## variables names from original input file
-names(sun_data) <- c("nominal_date_yyyymmdd",
-                     "nominal_date_jdn",
-                     "avg_measurement_date_jdn",
-                     "std_dev_measurement_date",
-                     "tsi_1au",
-                     "instrument_accuracy_1au",
-                     "instrument_precision_1au",
-                     "solar_standard_deviation_1au",
-                     "measurement_uncertainty_1au",
-                     "tsi_true_earth",
-                     "instrument_accuracy_true_earth",
-                     "instrument_precision_true_earth",
-                     "solar_standard_deviation_true_earth",
-                     "measurement_uncertainty_true_earth",
-                     "provisional_flag")
+NOAA <- readRDS(OUTPUT_NOAA)
+PMOD <- readRDS(OUTPUT_PMOD)
+SORC <- readRDS(OUTPUT_SORCE)
+TSIS <- readRDS(OUTPUT_TSIS)
 
 
 
-
-####  Build a R data.frame  ----------------------------------------------------
-## sorce
-tsi_df <- data.frame( nominal_date_yyyymmdd               = sun_data$nominal_date_yyyymmdd ,
-                      # nominal_date_jdn                    = jd2posixct(sun_data$nominal_date_jdn),
-                      # avg_measurement_date_jdn            = jd2posixct(sun_data$avg_measurement_date_jdn),
-                      std_dev_measurement_date            = sun_data$std_dev_measurement_date,
-                      tsi_1au                             = sun_data$tsi_1au,
-                      # instrument_accuracy_1au             = sun_data$instrument_accuracy_1au,
-                      # instrument_precision_1au            = sun_data$instrument_precision_1au,
-                      # solar_standard_deviation_1au        = sun_data$solar_standard_deviation_1au,
-                      measurement_uncertainty_1au         = sun_data$measurement_uncertainty_1au,
-                      tsi_true_earth                      = sun_data$tsi_true_earth,
-                      instrument_accuracy_true_earth      = sun_data$instrument_accuracy_true_earth,
-                      instrument_precision_true_earth     = sun_data$instrument_precision_true_earth,
-                      solar_standard_deviation_true_earth = sun_data$solar_standard_deviation_true_earth,
-                      measurement_uncertainty_true_earth  = sun_data$measurement_uncertainty_true_earth #,
-                      # provisional_flag                    = sun_data$provisional_flag
-)
-
-strdt      <- paste(tsi_df$nominal_date_yyyymmdd)
-dayseconds <- ( tsi_df$nominal_date_yyyymmdd %% 1 ) * 24 * 3600
-hours      <-     dayseconds %/% 3600
-minutes    <-   ( dayseconds - hours * 3600 ) %/% 60
-seconds    <- ((( dayseconds - hours * 3600 ) %/% 60 ) * 60) %/% 60
-times      <- sprintf("%02d:%02d:%02d", hours, minutes, seconds)
-
-tsi_df$nominal_date_yyyymmdd <- strptime( paste(substr(strdt,1,8), times), "%Y%m%d %H:%M:%S" )
+ylim <- range(NOAA$TSI,  PMOD$tsi_1au, SORC$tsi_1au, TSIS$tsi_1au)
+xlim <- range(NOAA$time, PMOD$Date, SORC$Date, TSIS$Date)
+xlim[1] <- TSI_START
 
 
-#' ##### Test if the sun is on (zero measurements may occur) #####
-tsi_df  <- tsi_df[tsi_df$tsi_true_earth > 500,]
+plot(  TSIS$Date, TSIS$tsi_1au, ylim = ylim, xlim = xlim, pch = ".")
+points(NOAA$time, NOAA$TSI,               pch = ".", col = 2 )
+points(SORC$Date, SORC$tsi_1au,           pch = ".", col = 3 )
+points(PMOD$Date, PMOD$tsi_1au,           pch = ".", col = 4 )
+# points(PMOD$Date, PMOD$tsi_1au_old_VIRGO, pch = ".", col = 5 )
 
 
-#+ include=FALSE
-####  Subset to project dates  ####
-# tsi_df  <- tsi_df[tsi_df$nominal_date_jdn > TSI_START,]
-tsi_df          <- tsi_df[tsi_df$nominal_date_yyyymmdd > TSI_START,]
-
-####  Remove invalid records
-lower_tsi_limit <- min(mean(tsi_df$tsi_1au), median(tsi_df$tsi_1au)) * 0.70
-tsi_df          <- tsi_df[ tsi_df$tsi_1au > lower_tsi_limit, ]
+## USE TSIS and NOAA
 
 
 
-####  Extend measurements until today  ####
-## use last measurement date and time step from origin
-# timestep        = tsi_df$nominal_date_jdn[100] - tsi_df$nominal_date_jdn[99]
-# last_measu_date = max(tsi_df$nominal_date_jdn) + timestep
+####    Load LAP Sun data    ###################################################
+NOAA         <- data.table(readRDS(OUTPUT_NOAA_LAP))
+TSIS         <- data.table(readRDS(OUTPUT_TSIS_LAP))
+ASTROPY_data <- data.table(readRDS(ASTROPYdb))
 
-#' #### Interpolate TSI measurements to our data ####
-#' Make functions from TSI measurements to match out data.
-#' Interpolate between measurements and extend tails as closest constant.
-tsi_fun <- approxfun(x      = tsi_df$nominal_date_yyyymmdd,
-                     y      = tsi_df$tsi_1au,
-                     method = "linear",
-                     rule   = 2:1,
-                     f      = 0,
-                     ties   = mean )
 
-#+ include=FALSE
-cat("Interpolate between measurements\n")
+names(NOAA)[names(NOAA) == "time"] <- "Date"
 
-#+ include=TRUE
-unc_fuc <- approxfun(x      = tsi_df$nominal_date_yyyymmdd,
-                     y      = tsi_df$measurement_uncertainty_1au,
-                     method = "linear",
-                     rule   = 2:1,
-                     f      = 0,
-                     ties   = mean )
+NOAA         <- NOAA[ Date >= TSI_START, ]
+TSIS         <- TSIS[ Date >= TSI_START, ]
+ASTROPY_data <- ASTROPY_data[ Date >= TSI_START, ]
 
-#' Interpolate the data, we have assumed that dates from Astropy are complete (we made them).
-tsi_all      <- tsi_fun( ASTROPY_data$Date )  # SORCE dates to project dates
-unc_all      <- unc_fuc( ASTROPY_data$Date )
 
-#' Compute TSI on earth using TSI at 1 au
-tsi_astropy  <- tsi_all / ( ASTROPY_data$Dist ^ 2 )
+names(NOAA)[names(NOAA) == "TSIextEARTH" ] <- "TSIextEARTH_NOAA"
+names(TSIS)[names(TSIS) == "TSIextEARTH" ] <- "TSIextEARTH_TSIS"
+names(NOAA)[names(NOAA) == "measur_error"] <- "measur_error_NOAA"
+names(TSIS)[names(TSIS) == "measur_error"] <- "measur_error_TSIS"
+names(NOAA)[names(NOAA) == "tsi_1au"     ] <- "tsi_1au_NOAA"
+names(TSIS)[names(TSIS) == "tsi_1au"     ] <- "tsi_1au_TSIS"
 
-#+ include=FALSE
-#### Constructed TSI data for output --------------------------------
-tsi_comb <- data.frame(
-                nominal_dates         = ASTROPY_data$Date, # Dates from SORCE extended to today
-                sun_dist              = ASTROPY_data$Dist, # Astropy sun distance not optimal
-                # tsi_true_earth_compex = tsi_astropy,       # Original data and extension with Astropy distance
-                TSIextEARTH_comb      = tsi_astropy,       # Original data and extension with Astropy distance
-                measur_error          = unc_all,           # Original data and extension of last value
-                tsi_1au               = tsi_all            # TSI at 1 au
-            )
+
+merge(NOAA, TSIS, all = T )
+
+
+stop()
+
+
+
+#' combine data and get mean diff
+tsi_merge <- data.table(merge(tsi_comb, tsis_comb, all = T))
+
+meandiff  <- mean(  tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP, na.rm = T)
+meaddiff  <- median(tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP, na.rm = T)
+
+ylim <- range(tsi_merge$tsi_1au_SORCE, tsi_merge$tsi_1au_LASP, na.rm = T)
+plot(  tsi_merge$Date, tsi_merge$tsi_1au_SORCE, "l", ylim = ylim)
+lines( tsi_merge$Date, tsi_merge$tsi_1au_LASP  )
+
+
+plot( tsi_merge$TSIextEARTH_comb_SORCE / tsi_merge$TSIextEARTH_comb_LASP )
+plot( tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
+
+plot( - meandiff + tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
+plot( - meaddiff + tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
+
+plot( (tsi_merge$TSIextEARTH_comb_SORCE - meandiff) / tsi_merge$TSIextEARTH_comb_LASP )
+plot( (tsi_merge$TSIextEARTH_comb_SORCE - meaddiff) / tsi_merge$TSIextEARTH_comb_LASP )
+
+plot( (tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP)/tsi_merge$TSIextEARTH_comb_LASP  )
+
+summary( tsi_merge$TSIextEARTH_comb_SORCE / tsi_merge$TSIextEARTH_comb_LASP )
+summary( tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
+summary((tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP)/tsi_merge$TSIextEARTH_comb_LASP )
+
+
+#' apply correction on SORCE data
+tsi_merge$TSIextEARTH_comb_SORCE <- tsi_merge$TSIextEARTH_comb_SORCE - meandiff
+tsi_merge$tsi_1au_SORCE          <- tsi_merge$tsi_1au_SORCE          - meandiff
+
+
+
+
+
+
+
+
+#########################################
+
+
+
 
 
 
@@ -226,15 +176,6 @@ text(ASTROPY_data$Date[1], y = qq[5],
 
 pander(summary(tsi_all),digits = 8)
 
-#' ### Solar irradiance at TOA
-#+ include=TRUE, echo=FALSE
-plot(ASTROPY_data$Date, tsi_astropy,       "l", xlab = "", ylab = "SORCE TSI True Earth (Astropy) watt/m^2")
-pander(summary(tsi_astropy),digits = 8)
-
-#' ### Solar irradiance uncertainty
-#+ include=TRUE, echo=FALSE
-plot(ASTROPY_data$Date, unc_all,           "l", xlab = "", ylab = "SORCE TSI Uncertainty (Interpolated) watt/m^2")
-pander(summary(unc_all))
 
 #' ### Earth - Sun distance
 #+ include=TRUE, echo=FALSE
@@ -263,99 +204,9 @@ panderOptions("graph.fontsize", 9)
 panderOptions("table.alignment.default", "right")
 
 
-#' ### Statistics on input data ###
-#+ include=TRUE, echo=FALSE
-pander(summary(tsi_df,   digits = 5))
-
-#' ### Statistics on output data ###
-#+ include=TRUE, echo=FALSE
-pander(summary(tsi_comb, digits = 5))
-
-#' ### Raw Input data specifications ###
-
-#' |     Field name                      | type |format | Col. #, description                                                     |
-#' |-------------------------------------|------|-------|-------------------------------------------------------------------------|
-#' | nominal_date_yyyymmdd               | R8   | f12.3 | Column  1: Nominal Data Time, YYYYMMDD                                  |
-#' | nominal_date_jdn                    | R8   | f12.3 | Column  2: Nominal Data Time, Julian Day Number                         |
-#' | avg_measurement_date_jdn            | R8   | f15.6 | Column  3: Average Data Time, Julian Day Number                         |
-#' | std_dev_measurement_date            | R4   |  f7.4 | Column  4: Stdev of Average Data Time, days, 1 sigma                    |
-#' | tsi_1au                             | R8   | f10.4 | Column  5: Total Solar Irradiance (TSI) at 1-AU, $W/m^2$                |
-#' | instrument_accuracy_1au             | R4   | e10.3 | Column  6: Instrument Accuracy in 1-AU TSI, $W/m^2$, 1 sigma            |
-#' | instrument_precision_1au            | R4   | e10.3 | Column  7: Instrument Precision in TSI at 1-AU, $W/m^2$, 1 sigma        |
-#' | solar_standard_deviation_1au        | R4   | e10.3 | Column  8: Solar Standard Deviation in 1-AU TSI, $W/m^2$, 1 sigma       |
-#' | measurement_uncertainty_1au         | R4   | e10.3 | Column  9: Total Uncertainty in TSI at 1-AU, $W/m^2$, 1 sigma           |
-#' | tsi_true_earth                      | R8   | f10.4 | Column 10: Total Solar Irradiance at Earth distance, $W/m^2$            |
-#' | instrument_accuracy_true_earth      | R4   | e10.3 | Column 11: Instrument Accuracy at Earth distance, $W/m^2$, 1 sigma      |
-#' | instrument_precision_true_earth     | R4   | e10.3 | Column 12: Instrument Precision at Earth distance, $W/m^2$, 1 sigma     |
-#' | solar_standard_deviation_true_earth | R4   | e10.3 | Column 13: Solar Standard Deviation in TSI at Earth, $W/m^2$, 1 sigma   |
-#' | measurement_uncertainty_true_earth  | R4   | e10.3 | Column 14: Total Uncertainty in TSI at Earth distance, $W/m^2$, 1 sigma |
-#' | provisional_flag                    | I2   |    i2 | Column 15: Provisional Flag, 1=provisional data, 0=final data           |
 
 
 
-#+ include=FALSE
-#### lisird/latis data preparation ####
-
-#'
-#' ## lisird/latis data preparation
-#'
-#' #### Get raw TSI data from file
-#'
-#'
-## from lasp.colorado.edu/lisird/latis
-tsis_data <- data.table::fread(tsis_tsi)
-
-#' ignore zeros
-tsis_data <- tsis_data[ `tsi_1au (W/m^2)` >= 1 ]
-#+ include=FALSE
-
-
-
-
-names(tsis_data)[grep("time",names(tsis_data))]    <- "Date"
-names(tsis_data)[grep("tsi_1au",names(tsis_data))] <- "TSI_lasp"
-
-
-tsis_data <- tsis_data[ Date >= TSI_START]
-
-
-
-#' #### Interpolate TSI measurements to our data ####
-#' Make functions from TSI measurements to match out data.
-#' Interpolate between measurements and extend tails as closest constant.
-tsi_fun2 <- approxfun(x      = tsis_data$Date,
-                      y      = tsis_data$TSI_lasp,
-                      method = "linear",
-                      rule   = 1:2,
-                      f      = 0,
-                      ties   = mean )
-#+ include=FALSE
-cat("Interpolate between measurements and extend tail with closest constant\n")
-
-#+ include=TRUE
-unc_fuc2 <- approxfun(x      = tsis_data$Date,
-                      y      = tsis_data$`measurement_uncertainty_1au (W/m^2)`,
-                      method = "linear",
-                      rule   = 1:2,
-                      f      = 0,
-                      ties   = mean )
-
-#' Interpolate the data, we have assumed that dates from Astropy are complete (we made them).
-tsis_all      <- tsi_fun2( ASTROPY_data$Date )  # SORCE dates to project dates
-uncs_all      <- unc_fuc2( ASTROPY_data$Date )
-
-#' Compute TSI on earth using TSI at 1 au
-tsis_astropy  <- tsis_all / ( ASTROPY_data$Dist ^ 2 )
-
-#+ include=FALSE
-#### Constructed TSI data for output --------------------------------
-tsis_comb <- data.frame(
-    Date                  = ASTROPY_data$Date, # Dates from SORCE extended to today
-    sun_dist              = ASTROPY_data$Dist, # Astropy sun distance not optimal
-    TSIextEARTH_comb      = tsis_astropy,       # Original data and extension with Astropy distance
-    measur_error          = uncs_all,           # Original data and extension of last value
-    tsi_1au               = tsis_all            # TSI at 1 au
-)
 
 
 
