@@ -32,9 +32,9 @@ source("~/TSI/DEFINITIONS.R")
 ####    Check if need to run    ####
 
 
-if ( !file.exists(OUTPUT_TSIS_LAP) |
-     file.mtime(ASTROPYdb)   > file.mtime(OUTPUT_TSIS_LAP) |
-     file.mtime(OUTPUT_TSIS) > file.mtime(OUTPUT_TSIS_LAP) ) {
+if ( !file.exists(OUTPUT_PMOD_LAP) |
+     file.mtime(ASTROPYdb)   > file.mtime(OUTPUT_PMOD_LAP) |
+     file.mtime(OUTPUT_PMOD) > file.mtime(OUTPUT_PMOD_LAP) ) {
     cat("New data to parse\n\n")
 } else {
     cat("NO new data to parse\n\n")
@@ -45,10 +45,10 @@ if ( !file.exists(OUTPUT_TSIS_LAP) |
 
 ## Load data
 ASTROPY_data <- data.table(readRDS(ASTROPYdb))
-TSIS_data    <- data.table(readRDS(OUTPUT_TSIS))
+PMOD_data    <- data.table(readRDS(OUTPUT_PMOD))
 
 ASTROPY_data <- ASTROPY_data[ Date > TSI_START ]
-TSIS_data    <- TSIS_data[    Date > TSI_START ]
+PMOD_data    <- PMOD_data[    Date > TSI_START ]
 
 
 plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l")
@@ -57,45 +57,44 @@ plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l")
 #' #### Interpolate TSI measurements to our dates ####
 #' Make functions from TSI measurements to match out data.
 #' Interpolate between measurements only.
-tsi_fun <- approxfun(x      = TSIS_data$Date,
-                     y      = TSIS_data$tsi_1au,
+tsi_fun <- approxfun(x      = PMOD_data$Date,
+                     y      = PMOD_data$tsi_1au,
                      method = "linear",
                      rule   = 1,
                      ties   = mean )
 
+tsi_fun2 <- approxfun(x      = PMOD_data$Date,
+                      y      = PMOD_data$tsi_1au_old_VIRGO,
+                      method = "linear",
+                      rule   = 1,
+                      ties   = mean )
 
-
-
-unc_fuc <- approxfun(x      = TSIS_data$Date,
-                     y      = TSIS_data$measurement_uncertainty_1au,
-                     method = "linear",
-                     rule   = 1,
-                     ties   = mean )
 
 
 
 #' Interpolate the data, we have assumed that dates from Astropy are complete.
-tsi_all      <- tsi_fun( ASTROPY_data$Date )
-unc_all      <- unc_fuc( ASTROPY_data$Date )
+tsi_all           <- tsi_fun(  ASTROPY_data$Date )
+tsi_all_old_VIRGO <- tsi_fun2( ASTROPY_data$Date )
 
 #' Compute TSI on earth using TSI at 1 au
-tsi_astropy  <- tsi_all / ( ASTROPY_data$Dist ^ 2 )
+tsi_astropy            <- tsi_all           / ( ASTROPY_data$Dist ^ 2 )
+tsi_astropy_old_VIRGO  <- tsi_all_old_VIRGO / ( ASTROPY_data$Dist ^ 2 )
 
 
 #### Constructed TSI data for output --------------------------------
 tsi_comb <- data.frame(
-    Date          = ASTROPY_data$Date, # Dates from SORCE extended to today
-    sun_dist      = ASTROPY_data$Dist, # Astropy sun distance not optimal
-    TSIextEARTH   = tsi_astropy,       # Original data with Astropy distance
-    measur_error  = unc_all,           # Original data
-    tsi_1au       = tsi_all            # TSI at 1 au
+    Date                  = ASTROPY_data$Date,     # Dates from SORCE extended to today
+    sun_dist              = ASTROPY_data$Dist,     # Astropy sun distance not optimal
+    TSIextEARTH           = tsi_astropy,           # Original data with Astropy distance
+    TSIextEARTH_old_VIRGO = tsi_astropy_old_VIRGO, # Original data with Astropy distance
+    tsi_1au               = tsi_all                # TSI at 1 au
 )
 tsi_comb <- tsi_comb[ !is.na(tsi_comb$tsi_1au), ]
 
 
 #' #### Output data for use ####
 myRtools::write_RDS(object = tsi_comb,
-                    file   = OUTPUT_TSIS_LAP  )
+                    file   = OUTPUT_PMOD_LAP  )
 
 
 panderOptions("table.style", 'rmarkdown')

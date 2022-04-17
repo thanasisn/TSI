@@ -4,22 +4,22 @@
 
 rm(list = (ls()[ls() != ""]))
 Sys.setenv(TZ = "UTC")
-options("width" = 130)
 tic <- Sys.time()
 Script.Name <- tryCatch({ funr::sys.script() },
                         error = function(e) { cat(paste("\nUnresolved script name: ", e),"\n")
                             return("Undefined R script name!!") })
 if(!interactive()) {
-    pdf(  file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
-    sink( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
+    pdf( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
+    sink(file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
     filelock::lock(paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
 }
 
 
 library(knitr)
-opts_chunk$set( comment    = NA )
+opts_chunk$set( comment    = NA    )
 opts_chunk$set( fig.width  = 8,
-                fig.height = 5  )
+                fig.height = 5     )
+opts_chunk$set( dev        = "png" )
 
 library(pander)
 library(data.table)
@@ -32,9 +32,9 @@ source("~/TSI/DEFINITIONS.R")
 ####    Check if need to run    ####
 
 
-if ( !file.exists(OUTPUT_TSIS_LAP) |
-     file.mtime(ASTROPYdb)   > file.mtime(OUTPUT_TSIS_LAP) |
-     file.mtime(OUTPUT_TSIS) > file.mtime(OUTPUT_TSIS_LAP) ) {
+if ( !file.exists(OUTPUT_SORCE_LAP) |
+     file.mtime(ASTROPYdb)   > file.mtime(OUTPUT_SORCE_LAP) |
+     file.mtime(OUTPUT_SORCE) > file.mtime(OUTPUT_SORCE_LAP) ) {
     cat("New data to parse\n\n")
 } else {
     cat("NO new data to parse\n\n")
@@ -45,10 +45,10 @@ if ( !file.exists(OUTPUT_TSIS_LAP) |
 
 ## Load data
 ASTROPY_data <- data.table(readRDS(ASTROPYdb))
-TSIS_data    <- data.table(readRDS(OUTPUT_TSIS))
+SORCE_data   <- data.table(readRDS(OUTPUT_SORCE))
 
 ASTROPY_data <- ASTROPY_data[ Date > TSI_START ]
-TSIS_data    <- TSIS_data[    Date > TSI_START ]
+SORCE_data   <- SORCE_data[   Date > TSI_START ]
 
 
 plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l")
@@ -57,8 +57,8 @@ plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l")
 #' #### Interpolate TSI measurements to our dates ####
 #' Make functions from TSI measurements to match out data.
 #' Interpolate between measurements only.
-tsi_fun <- approxfun(x      = TSIS_data$Date,
-                     y      = TSIS_data$tsi_1au,
+tsi_fun <- approxfun(x      = SORCE_data$Date,
+                     y      = SORCE_data$tsi_1au,
                      method = "linear",
                      rule   = 1,
                      ties   = mean )
@@ -66,8 +66,8 @@ tsi_fun <- approxfun(x      = TSIS_data$Date,
 
 
 
-unc_fuc <- approxfun(x      = TSIS_data$Date,
-                     y      = TSIS_data$measurement_uncertainty_1au,
+unc_fuc <- approxfun(x      = SORCE_data$Date,
+                     y      = SORCE_data$measurement_uncertainty_1au,
                      method = "linear",
                      rule   = 1,
                      ties   = mean )
@@ -95,7 +95,7 @@ tsi_comb <- tsi_comb[ !is.na(tsi_comb$tsi_1au), ]
 
 #' #### Output data for use ####
 myRtools::write_RDS(object = tsi_comb,
-                    file   = OUTPUT_TSIS_LAP  )
+                    file   = OUTPUT_SORCE_LAP  )
 
 
 panderOptions("table.style", 'rmarkdown')

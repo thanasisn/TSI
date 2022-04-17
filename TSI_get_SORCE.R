@@ -26,41 +26,35 @@ source("~/TSI/DEFINITIONS.R")
 
 
 ####    Get data    ####
-system(paste("wget -N -r -np -nd -nH -O", DEST_PMOD, FROM_PMOD))
+system( paste0("curl \"", FROM_SORCE, "\" > ", DEST_SORCE) )
+
 
 
 ####    Parse data    ####
-PMOD_data <- read.table(file         = DEST_PMOD,
-                        comment.char = ";", colClasses=c("character"),
-                        skip         = 1 )
+SORCE_data <- fread(DEST_SORCE)
 
-PMOD_data$Date <- as.POSIXct( strptime(PMOD_data$V1,"%y%m%d") ) + 12*3600
-PMOD_data$V1   <- NULL
-PMOD_data$V2   <- NULL
-PMOD_data$V3   <- as.numeric(PMOD_data$V3)
-PMOD_data$V4   <- as.numeric(PMOD_data$V4)
-PMOD_data      <- data.table(PMOD_data)
-
-PMOD_data      <- PMOD_data[ V3 > 100 & V4 > 100  ]
+## fix names
+names(SORCE_data)[grep("time",names(SORCE_data))]    <- "Date"
+names(SORCE_data)[grep( " \\(W/m\\^2\\)", names(SORCE_data))] <-
+    sub(  " \\(W/m\\^2\\)", "", grep( " \\(W/m\\^2\\)", names(SORCE_data), value = T))
 
 
-names(PMOD_data)[names(PMOD_data) == "V3"] <- "tsi_1au"
-names(PMOD_data)[names(PMOD_data) == "V4"] <- "tsi_1au_old_VIRGO"
+#' ignore zeros
+SORCE_data <- SORCE_data[ tsi_1au >= 1 ]
 
-setorder(PMOD_data, Date)
-
-
+setorder(SORCE_data, Date)
 
 
-hist( PMOD_data$tsi_1au )
+wecare    <- grep( "true_earth" ,names(SORCE_data), value = T, invert = T)
+SORCE_data <- SORCE_data[, ..wecare ]
 
-ylim = range(PMOD_data$tsi_1au, PMOD_data$tsi_1au_old_VIRGO)
 
-plot(   PMOD_data$Date, PMOD_data$tsi_1au, pch = ".", ylim = ylim)
-points( PMOD_data$Date, PMOD_data$tsi_1au_old_VIRGO, pch = ".", col = "yellow")
+hist( SORCE_data$tsi_1au )
 
-myRtools::write_RDS(object = PMOD_data,
-                    file   = OUTPUT_PMOD  )
+plot( SORCE_data$Date, SORCE_data$tsi_1au, pch = ".")
+
+myRtools::write_RDS(object = SORCE_data,
+                    file   = OUTPUT_SORCE  )
 
 tac <- Sys.time()
 cat(sprintf("%s %s@%s %s %f mins\n\n",Sys.time(),Sys.info()["login"],Sys.info()["nodename"],Script.Name,difftime(tac,tic,units="mins")))

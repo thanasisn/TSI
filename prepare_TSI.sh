@@ -15,11 +15,11 @@ info "START :: $0 :: $* ::"
 
 
 
-info "Get TSI model from NOAA"
-Rscript "$(dirname "$0")/TSI_get_NOAA.R"
+# info "Get TSI model from NOAA"
+# Rscript "$(dirname "$0")/TSI_get_NOAA.R"
 
-info "Prepare NOAA TSI for LAP"
-Rscript "$(dirname "$0")/TSI_NOAA_LAP.R"
+# info "Prepare NOAA TSI for LAP"
+# Rscript "$(dirname "$0")/TSI_NOAA_LAP.R"
 
 info "Get TSI from TSIS"
 Rscript "$(dirname "$0")/TSI_get_TSIS.R"
@@ -27,7 +27,19 @@ Rscript "$(dirname "$0")/TSI_get_TSIS.R"
 info "Prepare TSIS TSI for LAP"
 Rscript "$(dirname "$0")/TSI_TSIS_LAP.R"
 
+## Frozen data
+# info "Get TSI from PMOD"
+# Rscript "$(dirname "$0")/TSI_get_PMOD.R"
 
+info "Prepare PMOD TSI for LAP"
+Rscript "$(dirname "$0")/TSI_PMOD_LAP.R"
+
+## Frozen data
+# info "Get TSI from SORCE"
+# Rscript "$(dirname "$0")/TSI_get_SORCE.R"
+
+info "Prepare TSIS SORCE for LAP"
+Rscript "$(dirname "$0")/TSI_SORCE_LAP.R"
 
 
 

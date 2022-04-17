@@ -47,6 +47,7 @@ if ( !file.exists(OUTPUT_NOAA_LAP) |
 ASTROPY_data <- data.table(readRDS(ASTROPYdb))
 NOAA_data    <- data.table(readRDS(OUTPUT_NOAA))
 
+setorder(ASTROPY_data, Date)
 ASTROPY_data <- ASTROPY_data[ Date > TSI_START ]
 NOAA_data    <- NOAA_data[    time > TSI_START ]
 
@@ -68,7 +69,6 @@ tsi_fun <- approxfun(x      = NOAA_data$time,
                      ties   = mean )
 
 
-cat("Interpolate between measurements\n")
 
 
 unc_fuc <- approxfun(x      = NOAA_data$time,
@@ -95,6 +95,7 @@ tsi_comb <- data.frame(
     measur_error  = unc_all,           # Original data
     tsi_1au       = tsi_all            # TSI at 1 au
 )
+tsi_comb <- tsi_comb[ !is.na(tsi_comb$tsi_1au), ]
 
 
 #' #### Output data for use ####
