@@ -44,7 +44,7 @@ Rscript "$(dirname "$0")/TSI_SORCE_LAP.R"
 
 
 info "Prepare TSI for use"
-Rscript "$(dirname "$0")/prepare_TSI.R"
+Rscript "$(dirname "$0")/prepare_TSI_LAP.R"
 
 
 
