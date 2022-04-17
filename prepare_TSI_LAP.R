@@ -93,47 +93,56 @@ names(NOAA)[names(NOAA) == "tsi_1au"     ] <- "tsi_1au_NOAA"
 names(TSIS)[names(TSIS) == "tsi_1au"     ] <- "tsi_1au_TSIS"
 
 
-merge(NOAA, TSIS, all = T )
+#' combine data and get mean diff
+tsi_merge <- merge(NOAA, TSIS, all = T )
+rm(NOAA, TSIS, PMOD, SORC)
+
+
+
+meandiff  <- mean(  tsi_merge$TSIextEARTH_NOAA - tsi_merge$TSIextEARTH_TSIS, na.rm = T)
+meaddiff  <- median(tsi_merge$TSIextEARTH_NOAA - tsi_merge$TSIextEARTH_TSIS, na.rm = T)
+
+ylim <- range(tsi_merge$tsi_1au_NOAA, tsi_merge$tsi_1au_TSIS, na.rm = T)
+plot(  tsi_merge$Date, tsi_merge$tsi_1au_NOAA, pch = ".", ylim = ylim, col = 2)
+points(tsi_merge$Date, tsi_merge$tsi_1au_TSIS, pch = ".", col = 3)
+title(main = "Original data")
+
+
+plot(  tsi_merge$Date, tsi_merge$tsi_1au_NOAA,            pch = ".", ylim = ylim, col = 2)
+points(tsi_merge$Date, tsi_merge$tsi_1au_TSIS + meandiff, pch = ".", col = 3)
+title(main = "Moved data")
+
+
+####   Create composite output   ###############################################
+tsi_merge$tsi_1au_TSIS     <- tsi_merge$tsi_1au_TSIS     + meandiff
+tsi_merge$TSIextEARTH_NOAA <- tsi_merge$TSIextEARTH_TSIS + meandiff
+
+#' Fill with both data
+vec        <- !is.na(tsi_merge$TSIextEARTH_NOAA)
+tsi_merge[ vec, TSIextEARTH_comb  := TSIextEARTH_NOAA  ]
+tsi_merge[ vec, measur_error_comb := measur_error_NOAA ]
+tsi_merge[ vec, tsi_1au_comb      := tsi_1au_NOAA      ]
+tsi_merge[ vec, Source := "NOAA"                       ]
+vec        <- is.na(tsi_merge$TSIextEARTH_comb)
+tsi_merge[ vec, Source := "TSIS_adjusted"              ]
+tsi_merge[ vec, TSIextEARTH_comb  := TSIextEARTH_TSIS  ]
+tsi_merge[ vec, tsi_1au_comb      := tsi_1au_TSIS      ]
+tsi_merge[ vec, measur_error_comb := measur_error_TSIS ]
+
+
+#+ include=FALSE
+tsi_merge[, TSIextEARTH_NOAA   := NULL ]
+tsi_merge[, measur_error_NOAA  := NULL ]
+tsi_merge[, tsi_1au_NOAA       := NULL ]
+tsi_merge[, TSIextEARTH_TSIS   := NULL ]
+tsi_merge[, measur_error_TSIS  := NULL ]
+tsi_merge[, tsi_1au_TSIS       := NULL ]
+
+
+## TODO fill last data
 
 
 stop()
-
-
-
-#' combine data and get mean diff
-tsi_merge <- data.table(merge(tsi_comb, tsis_comb, all = T))
-
-meandiff  <- mean(  tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP, na.rm = T)
-meaddiff  <- median(tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP, na.rm = T)
-
-ylim <- range(tsi_merge$tsi_1au_SORCE, tsi_merge$tsi_1au_LASP, na.rm = T)
-plot(  tsi_merge$Date, tsi_merge$tsi_1au_SORCE, "l", ylim = ylim)
-lines( tsi_merge$Date, tsi_merge$tsi_1au_LASP  )
-
-
-plot( tsi_merge$TSIextEARTH_comb_SORCE / tsi_merge$TSIextEARTH_comb_LASP )
-plot( tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
-
-plot( - meandiff + tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
-plot( - meaddiff + tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
-
-plot( (tsi_merge$TSIextEARTH_comb_SORCE - meandiff) / tsi_merge$TSIextEARTH_comb_LASP )
-plot( (tsi_merge$TSIextEARTH_comb_SORCE - meaddiff) / tsi_merge$TSIextEARTH_comb_LASP )
-
-plot( (tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP)/tsi_merge$TSIextEARTH_comb_LASP  )
-
-summary( tsi_merge$TSIextEARTH_comb_SORCE / tsi_merge$TSIextEARTH_comb_LASP )
-summary( tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
-summary((tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP)/tsi_merge$TSIextEARTH_comb_LASP )
-
-
-#' apply correction on SORCE data
-tsi_merge$TSIextEARTH_comb_SORCE <- tsi_merge$TSIextEARTH_comb_SORCE - meandiff
-tsi_merge$tsi_1au_SORCE          <- tsi_merge$tsi_1au_SORCE          - meandiff
-
-
-
-
 
 
 
@@ -144,37 +153,6 @@ tsi_merge$tsi_1au_SORCE          <- tsi_merge$tsi_1au_SORCE          - meandiff
 
 
 
-
-
-#+ include=TRUE, echo=FALSE
-par(mar = c(2,4,2,1))
-#' ### Solar irradiance at 1 au ###
-#+ include=TRUE, echo=FALSE
-ylim = range(c( tsi_all + 0.1, tsi_all - 0.1 ), na.rm = T)
-plot( ASTROPY_data$Date, tsi_all, "l", xlab = "", ylab = "SORCE TSI (Interpolated) watt/m^2", ylim = ylim)
-lines(ASTROPY_data$Date, runmean(tsi_all, 15000), col = 5, lwd = 3)
-qq <- quantile(tsi_all, na.rm = T)
-
-abline( h = qq[3], col = 'orange',lwd = 3 )
-abline( h = qq[2], col = 'green', lwd = 2 )
-abline( h = qq[4], col = 'green', lwd = 2 )
-abline( h = qq[1], col = 'red',   lwd = 1 )
-abline( h = qq[5], col = 'red',   lwd = 1 )
-
-text(ASTROPY_data$Date[1], y = qq[3],
-     as.character(round(qq[3],1)), adj = c(0,1.5), col = 'orange', lwd = 4 )
-
-text(ASTROPY_data$Date[1], y = qq[2],
-     as.character(round(qq[2],1)), adj = c(0,1.5), col = 'green', lwd = 4 )
-text(ASTROPY_data$Date[1], y = qq[4],
-     as.character(round(qq[4],1)), adj = c(0,1.5), col = 'green', lwd = 4 )
-
-text(ASTROPY_data$Date[1], y = qq[1],
-     as.character(round(qq[1],1)), adj = c(0,1.5), col = 'red', lwd = 4 )
-text(ASTROPY_data$Date[1], y = qq[5],
-     as.character(round(qq[5],1)), adj = c(0,1.5), col = 'red', lwd = 4 )
-
-pander(summary(tsi_all),digits = 8)
 
 
 #' ### Earth - Sun distance
@@ -197,11 +175,6 @@ myRtools::write_RDS(object = tsi_comb,
 
 
 
-panderOptions("table.style", 'rmarkdown')
-panderOptions("table.split.table", 100 )
-panderOptions("table.continues", '')
-panderOptions("graph.fontsize", 9)
-panderOptions("table.alignment.default", "right")
 
 
 
@@ -269,59 +242,6 @@ names(tsis_comb)[grep("measur_error",names(tsis_comb))]     <- "measur_error_LAS
 names(tsis_comb)[grep("tsi_1au",names(tsis_comb))]          <- "tsi_1au_LASP"
 
 
-
-#' combine data and get mean diff
-tsi_merge <- data.table(merge(tsi_comb, tsis_comb, all = T))
-
-meandiff  <- mean(  tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP, na.rm = T)
-meaddiff  <- median(tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP, na.rm = T)
-
-ylim <- range(tsi_merge$tsi_1au_SORCE, tsi_merge$tsi_1au_LASP, na.rm = T)
-plot(  tsi_merge$Date, tsi_merge$tsi_1au_SORCE, "l", ylim = ylim)
-lines( tsi_merge$Date, tsi_merge$tsi_1au_LASP  )
-
-
-plot( tsi_merge$TSIextEARTH_comb_SORCE / tsi_merge$TSIextEARTH_comb_LASP )
-plot( tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
-
-plot( - meandiff + tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
-plot( - meaddiff + tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
-
-plot( (tsi_merge$TSIextEARTH_comb_SORCE - meandiff) / tsi_merge$TSIextEARTH_comb_LASP )
-plot( (tsi_merge$TSIextEARTH_comb_SORCE - meaddiff) / tsi_merge$TSIextEARTH_comb_LASP )
-
-plot( (tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP)/tsi_merge$TSIextEARTH_comb_LASP  )
-
-summary( tsi_merge$TSIextEARTH_comb_SORCE / tsi_merge$TSIextEARTH_comb_LASP )
-summary( tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP )
-summary((tsi_merge$TSIextEARTH_comb_SORCE - tsi_merge$TSIextEARTH_comb_LASP)/tsi_merge$TSIextEARTH_comb_LASP )
-
-
-#' apply correction on SORCE data
-tsi_merge$TSIextEARTH_comb_SORCE <- tsi_merge$TSIextEARTH_comb_SORCE - meandiff
-tsi_merge$tsi_1au_SORCE          <- tsi_merge$tsi_1au_SORCE          - meandiff
-
-
-#' fill with both data
-vec        <- !is.na(tsi_merge$TSIextEARTH_comb_LASP)
-tsi_merge[ vec, TSIextEARTH_comb  := TSIextEARTH_comb_LASP ]
-tsi_merge[ vec, measur_error_comb := measur_error_LASP     ]
-tsi_merge[ vec, tsi_1au_comb      := tsi_1au_LASP          ]
-tsi_merge[ vec, Source := "LASP"  ]
-vec        <- is.na(tsi_merge$TSIextEARTH_comb)
-tsi_merge[ vec, Source := "SORCE" ]
-tsi_merge[ vec, TSIextEARTH_comb  := TSIextEARTH_comb_SORCE ]
-tsi_merge[ vec, tsi_1au_comb      := tsi_1au_SORCE ]
-tsi_merge[ vec, measur_error_comb := measur_error_SORCE ]
-
-
-#+ include=FALSE
-tsi_merge[, TSIextEARTH_comb_LASP  := NULL ]
-tsi_merge[, measur_error_LASP      := NULL ]
-tsi_merge[, tsi_1au_LASP           := NULL ]
-tsi_merge[, TSIextEARTH_comb_SORCE := NULL ]
-tsi_merge[, measur_error_SORCE     := NULL ]
-tsi_merge[, tsi_1au_SORCE          := NULL ]
 
 
 
