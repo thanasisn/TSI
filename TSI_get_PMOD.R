@@ -26,40 +26,36 @@ source("~/TSI/DEFINITIONS.R")
 
 
 ####    Get data    ####
-system(paste("wget -N -r -np -nd -nH -O", DEST_PMOD, FROM_PMOD))
+system( paste0("curl \"", FROM_TSIS, "\" > ", DEST_TSIS) )
+
 
 
 ####    Parse data    ####
-PMOD_data <- read.table(file         = DEST_PMOD,
-                        comment.char = ";", colClasses=c("character"),
-                        skip         = 1 )
+tsis_data <- fread(DEST_TSIS)
 
-PMOD_data$Date <- as.POSIXct( strptime(PMOD_data$V1,"%y%m%d") ) + 12*3600
-PMOD_data$V1   <- NULL
-PMOD_data$V2   <- NULL
-PMOD_data$V3   <- as.numeric(PMOD_data$V3)
-PMOD_data$V4   <- as.numeric(PMOD_data$V4)
-PMOD_data      <- data.table(PMOD_data)
-
-PMOD_data      <- PMOD_data[ V3 > 100 & V4 > 100  ]
+## fix names
+names(tsis_data)[grep("time",names(tsis_data))]    <- "Date"
+names(tsis_data)[grep( " \\(W/m\\^2\\)", names(tsis_data))] <-
+    sub(  " \\(W/m\\^2\\)", "", grep( " \\(W/m\\^2\\)", names(tsis_data), value = T))
 
 
-names(PMOD_data)[names(PMOD_data) == "V3"] <- "tsi_1au"
-names(PMOD_data)[names(PMOD_data) == "V4"] <- "tsi_1au_old_VIRGO"
+#' ignore zeros
+tsis_data <- tsis_data[ tsi_1au >= 1 ]
 
-setorder(PMOD_data, Date)
+setorder(tsis_data, Date)
+
+tsis_data[ , provisional_flag := NULL ]
+
+wecare    <- grep( "true_earth" ,names(tsis_data), value = T, invert = T)
+tsis_data <- tsis_data[, ..wecare ]
 
 
+hist( tsis_data$tsi_1au )
 
+plot( tsis_data$Date, tsis_data$tsi_1au, pch = ".")
 
-hist( PMOD_data$tsi_1au )
-
-
-plot(   PMOD_data$Date, PMOD_data$tsi_1au, pch = ".")
-points( PMOD_data$Date, PMOD_data$tsi_1au_old_VIRGO, col = "yellow")
-
-myRtools::write_RDS(object = PMOD_data,
-                    file   = OUTPUT_PMOD  )
+myRtools::write_RDS(object = tsis_data,
+                    file   = OUTPUT_TSIS  )
 
 tac <- Sys.time()
 cat(sprintf("%s %s@%s %s %f mins\n\n",Sys.time(),Sys.info()["login"],Sys.info()["nodename"],Script.Name,difftime(tac,tic,units="mins")))
