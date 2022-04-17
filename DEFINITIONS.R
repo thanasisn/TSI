@@ -2,8 +2,12 @@
 #' Here are some global or common variables for this project.
 #'
 
-TSI_START   <- as.POSIXct("1993-01-01 00:00", tz = "UTC")
-ASTROPYdb   <- "/home/athan/DATA_RAW/SUN/Astropy_LAP.Rds"
+
+TSI_START        <- as.POSIXct("1993-01-01 00:00", tz = "UTC")
+ASTROPYdb        <- "/home/athan/DATA_RAW/SUN/Astropy_LAP.Rds"
+
+####    TSI data to use    #####################################################
+COMP_TSI         <- "~/DATA/SUN/TSI_COMPOSITE.Rds"
 
 
 
@@ -12,6 +16,7 @@ FROM_NOAA        <- "https://www.ncei.noaa.gov/data/total-solar-irradiance/acces
 DEST_NOAA        <- "~/DATA/SUN/TSI_model_NOAA/"
 OUTPUT_NOAA      <- "~/DATA/SUN/TSI_model_NOAA.Rds"
 OUTPUT_NOAA_LAP  <- "~/DATA/SUN/TSI_model_NOAA_LAP.Rds"
+
 
 
 ####    TSIS TSI from LISIRD    ################################################
@@ -35,5 +40,6 @@ FROM_SORCE       <- "https://lasp.colorado.edu/lisird/latis/dap/sorce_tsi_6hr_l3
 DEST_SORCE       <- "~/DATA/SUN/TSI_sorce_tsi_6hr_l3.csv"
 OUTPUT_SORCE     <- "~/DATA/SUN/TSI_sorce_tsi_6hr_l3.Rds"
 OUTPUT_SORCE_LAP <- "~/DATA/SUN/TSI_sorce_tsi_6hr_l3_LAP.Rds"
+
 
 

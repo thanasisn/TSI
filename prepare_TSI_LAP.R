@@ -110,12 +110,21 @@ title(main = "Original data")
 
 plot(  tsi_merge$Date, tsi_merge$tsi_1au_NOAA,            pch = ".", ylim = ylim, col = 2)
 points(tsi_merge$Date, tsi_merge$tsi_1au_TSIS + meandiff, pch = ".", col = 3)
+title(main = "Moved data 1au")
+
+
+ylim <- range(tsi_merge$TSIextEARTH_NOAA, tsi_merge$TSIextEARTH_TSIS + meandiff, na.rm = T)
+plot(  tsi_merge$Date, tsi_merge$TSIextEARTH_NOAA,            pch = ".", ylim = ylim, col = 2)
+points(tsi_merge$Date, tsi_merge$TSIextEARTH_TSIS + meandiff, pch = ".", col = 3)
 title(main = "Moved data")
+
 
 
 ####   Create composite output   ###############################################
 tsi_merge$tsi_1au_TSIS     <- tsi_merge$tsi_1au_TSIS     + meandiff
-tsi_merge$TSIextEARTH_NOAA <- tsi_merge$TSIextEARTH_TSIS + meandiff
+tsi_merge$TSIextEARTH_TSIS <- tsi_merge$TSIextEARTH_TSIS + meandiff
+
+
 
 #' Fill with both data
 vec        <- !is.na(tsi_merge$TSIextEARTH_NOAA)
@@ -139,165 +148,20 @@ tsi_merge[, measur_error_TSIS  := NULL ]
 tsi_merge[, tsi_1au_TSIS       := NULL ]
 
 
+pander(summary(tsi_merge))
+
 ## TODO fill last data
 
-
-stop()
-
-
-
-
-#########################################
-
-
-
-
-
-
-
-#' ### Earth - Sun distance
-#+ include=TRUE, echo=FALSE
-plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l", xlab = "", ylab = "Sun-Thessaloniki Distance AU")
-pander(summary(ASTROPY_data$Dist))
-
-
-
-#+ include=FALSE
-## Export last day of SORCE measurements to file
-LAST_TSI_DATE = max(tsi_df$nominal_date_yyyymmdd)
-save( LAST_TSI_DATE, file = GLOBAL_file)
-
-#' #### Output old data for use ####
-#+ include=TRUE, echo=FALSE
-myRtools::write_RDS(object = tsi_comb,
-                    file   = tsi_Rds  )
-#+ include=FALSE
-
-
-
-
-
-
-
-
-
-
-
-
-#+ include=TRUE, echo=FALSE
-par(mar = c(2,4,2,1))
-#' ### Solar irradiance at 1 au ###
-#+ include=TRUE, echo=FALSE
-ylim = range(c( tsis_all + 0.1, tsis_all - 0.1 ), na.rm = T)
-plot( ASTROPY_data$Date, tsis_all, "l", xlab = "", ylab = "LASP TSI (Interpolated) watt/m^2", ylim = ylim)
-lines(ASTROPY_data$Date, runmean(tsis_all, 15000), col = 5, lwd = 3)
-qq <- quantile(tsis_all, na.rm = T)
-
-abline( h = qq[3], col = 'orange',lwd = 3 )
-abline( h = qq[2], col = 'green', lwd = 2 )
-abline( h = qq[4], col = 'green', lwd = 2 )
-abline( h = qq[1], col = 'red',   lwd = 1 )
-abline( h = qq[5], col = 'red',   lwd = 1 )
-
-text(ASTROPY_data$Date[1], y = qq[3],
-     as.character(round(qq[3],1)), adj = c(0,1.5), col = 'orange', lwd = 4 )
-
-text(ASTROPY_data$Date[1], y = qq[2],
-     as.character(round(qq[2],1)), adj = c(0,1.5), col = 'green', lwd = 4 )
-text(ASTROPY_data$Date[1], y = qq[4],
-     as.character(round(qq[4],1)), adj = c(0,1.5), col = 'green', lwd = 4 )
-
-text(ASTROPY_data$Date[1], y = qq[1],
-     as.character(round(qq[1],1)), adj = c(0,1.5), col = 'red', lwd = 4 )
-text(ASTROPY_data$Date[1], y = qq[5],
-     as.character(round(qq[5],1)), adj = c(0,1.5), col = 'red', lwd = 4 )
-
-pander(summary(tsis_all),digits = 8)
-
-
-#' ### Solar irradiance at TOA
-#+ include=TRUE, echo=FALSE
-plot(ASTROPY_data$Date, tsis_astropy,   "l", xlab = "", ylab = "LASP TSI True Earth (Astropy) watt/m^2")
-pander(summary(tsi_astropy),digits = 8)
-
-#' ### Solar irradiance uncertainty
-#+ include=TRUE, echo=FALSE
-plot(ASTROPY_data$Date, uncs_all,       "l", xlab = "", ylab = "LASP TSI Uncertainty (Interpolated) watt/m^2")
-pander(summary(unc_all))
-
-
-
-
-
-#' ## Combine time series
-#+ include=FALSE
-
-names(tsi_comb)[grep("dates",names(tsi_comb))]              <- "Date"
-names(tsi_comb)[grep("TSIextEARTH_comb",names(tsi_comb))]   <- "TSIextEARTH_comb_SORCE"
-names(tsi_comb)[grep("measur_error",names(tsi_comb))]       <- "measur_error_SORCE"
-names(tsi_comb)[grep("tsi_1au",names(tsi_comb))]            <- "tsi_1au_SORCE"
-
-names(tsis_comb)[grep("TSIextEARTH_comb",names(tsis_comb))] <- "TSIextEARTH_comb_LASP"
-names(tsis_comb)[grep("measur_error",names(tsis_comb))]     <- "measur_error_LASP"
-names(tsis_comb)[grep("tsi_1au",names(tsis_comb))]          <- "tsi_1au_LASP"
-
-
-
-
-
-#+ include=TRUE, echo=FALSE
-par(mar = c(2,4,2,1))
-#' ### Solar irradiance at 1 au ###
-#+ include=TRUE, echo=FALSE
-ylim = range(c( tsi_merge$tsi_1au_comb + 0.1, tsi_merge$tsi_1au_comb - 0.1 ), na.rm = T)
-plot( tsi_merge$Date, tsi_merge$tsi_1au_comb, "l", xlab = "", ylab = "LASP TSI (Interpolated) watt/m^2", ylim = ylim)
-lines(tsi_merge$Date, runmean(tsi_merge$tsi_1au_comb, 15000), col = 5, lwd = 3)
-qq <- quantile(tsi_merge$tsi_1au_comb, na.rm = T)
-
-abline( h = qq[3], col = 'orange',lwd = 3 )
-abline( h = qq[2], col = 'green', lwd = 2 )
-abline( h = qq[4], col = 'green', lwd = 2 )
-abline( h = qq[1], col = 'red',   lwd = 1 )
-abline( h = qq[5], col = 'red',   lwd = 1 )
-
-text(tsi_merge$Date[1], y = qq[3],
-     as.character(round(qq[3],1)), adj = c(0,1.5), col = 'orange', lwd = 4 )
-
-text(tsi_merge$Date[1], y = qq[2],
-     as.character(round(qq[2],1)), adj = c(0,1.5), col = 'green', lwd = 4 )
-text(tsi_merge$Date[1], y = qq[4],
-     as.character(round(qq[4],1)), adj = c(0,1.5), col = 'green', lwd = 4 )
-
-text(tsi_merge$Date[1], y = qq[1],
-     as.character(round(qq[1],1)), adj = c(0,1.5), col = 'red', lwd = 4 )
-text(tsi_merge$Date[1], y = qq[5],
-     as.character(round(qq[5],1)), adj = c(0,1.5), col = 'red', lwd = 4 )
-
-pander(summary(tsi_merge$TSIextEARTH_comb),digits = 8)
-
-
-#' ### Solar irradiance at TOA
-#+ include=TRUE, echo=FALSE
-plot(tsi_merge$Date,  tsi_merge$sun_dist,  "l", xlab = "", ylab = "LASP TSI True Earth (Astropy) watt/m^2")
-pander(summary(tsi_astropy),digits = 8)
-
-#' ### Solar irradiance uncertainty
-#+ include=TRUE, echo=FALSE
-plot(tsi_merge$Date, tsi_merge$measur_error_comb,      "l", xlab = "", ylab = "LASP TSI Uncertainty (Interpolated) watt/m^2")
-pander(summary(unc_all))
-
-
-
-
-##### TODO plot line by source
+plot(tsi_merge$Date, tsi_merge$sun_dist,          pch = ".")
+plot(tsi_merge$Date, tsi_merge$TSIextEARTH_comb,  pch = ".")
+plot(tsi_merge$Date, tsi_merge$measur_error_comb, pch = ".")
+plot(tsi_merge$Date, tsi_merge$tsi_1au_comb,      pch = ".")
 
 #' #### Output data for use ####
 #+ include=TRUE, echo=FALSE
 myRtools::write_RDS(object = tsi_merge,
-                    file   = tsi_comp_out  )
+                    file   = COMP_TSI  )
 #+ include=FALSE
-
-
 
 
 #' **END**
