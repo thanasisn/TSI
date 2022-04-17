@@ -31,22 +31,17 @@ system(paste("wget -N -r -np -nd -nH -O", DEST_PMOD, FROM_PMOD))
 
 ####    Parse data    ####
 PMOD_data <- read.table(file         = DEST_PMOD,
-                        comment.char = ";",
+                        comment.char = ";", colClasses=c("character"),
                         skip         = 1 )
 
-plot(PMOD_data$V2)
-
-
-stop()
-paste()
-strptime(PMOD_data$V1,"%y%m%d")
-
-stop()
 PMOD_data$Date <- as.POSIXct( strptime(PMOD_data$V1,"%y%m%d") ) + 12*3600
-PMOD_data <- data.table(PMOD_data)
-PMOD_data[ , V1 := NULL ]
-PMOD_data[ , V2 := NULL ]
-PMOD_data <- PMOD_data[ V3 > 100 & V4 > 100  ]
+PMOD_data$V1   <- NULL
+PMOD_data$V2   <- NULL
+PMOD_data$V3   <- as.numeric(PMOD_data$V3)
+PMOD_data$V4   <- as.numeric(PMOD_data$V4)
+PMOD_data      <- data.table(PMOD_data)
+
+PMOD_data      <- PMOD_data[ V3 > 100 & V4 > 100  ]
 
 
 names(PMOD_data)[names(PMOD_data) == "V3"] <- "tsi_1au"
@@ -59,7 +54,9 @@ setorder(PMOD_data, Date)
 
 hist( PMOD_data$tsi_1au )
 
-plot( PMOD_data$Date, PMOD_data$tsi_1au, pch = ".")
+
+plot(   PMOD_data$Date, PMOD_data$tsi_1au, pch = ".")
+points( PMOD_data$Date, PMOD_data$tsi_1au_old_VIRGO, col = "yellow")
 
 myRtools::write_RDS(object = PMOD_data,
                     file   = OUTPUT_PMOD  )
