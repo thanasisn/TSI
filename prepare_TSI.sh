@@ -15,11 +15,11 @@ info "START :: $0 :: $* ::"
 
 
 
-# info "Get TSI model from NOAA"
-# Rscript "$(dirname "$0")/TSI_get_NOAA.R"
+info "Get TSI model from NOAA"
+Rscript "$(dirname "$0")/TSI_get_NOAA.R"
 
-# info "Prepare NOAA TSI for LAP"
-# Rscript "$(dirname "$0")/TSI_NOAA_LAP.R"
+info "Prepare NOAA TSI for LAP"
+Rscript "$(dirname "$0")/TSI_NOAA_LAP.R"
 
 info "Get TSI from TSIS"
 Rscript "$(dirname "$0")/TSI_get_TSIS.R"
