@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# /* Copyright (C) 2022 Athanasios Natsis <natsisthanasis@gmail.com> */
+# /* Copyright (C) 2022 Athanasios Natsis <natsisphysicist@gmail.com> */
 
 #' ---
 #' title:  "TSI data preparation."
@@ -67,6 +67,10 @@ points(SORC$Date, SORC$tsi_1au,           pch = ".", col = 3 )
 points(PMOD$Date, PMOD$tsi_1au,           pch = ".", col = 4 )
 # points(PMOD$Date, PMOD$tsi_1au_old_VIRGO, pch = ".", col = 5 )
 
+legend("bottom", ncol = 4,
+       legend = c("TSIS", "NOAA", "SORC", "PMOD"),
+       col    = c(1:4),
+       pch    = 19, bty = "n", cex = .7)
 
 ## USE TSIS and NOAA
 
@@ -74,8 +78,13 @@ points(PMOD$Date, PMOD$tsi_1au,           pch = ".", col = 4 )
 
 ####    Load LAP Sun data    ###################################################
 NOAA         <- data.table(readRDS(OUTPUT_NOAA_LAP))
+names(NOAA)[names(NOAA) == "nominal_dates"] <- "Date"
 TSIS         <- data.table(readRDS(OUTPUT_TSIS_LAP))
 ASTROPY_data <- data.table(readRDS(ASTROPYdb))
+
+
+range(NOAA$Date)
+range(TSIS$Date)
 
 
 names(NOAA)[names(NOAA) == "time"] <- "Date"
