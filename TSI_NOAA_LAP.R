@@ -36,9 +36,9 @@ if(!interactive()) {
 
 
 library(knitr)
-opts_chunk$set( comment    = NA )
-opts_chunk$set( fig.width  = 8,
-                fig.height = 5  )
+opts_chunk$set(comment    = NA )
+opts_chunk$set(fig.width  = 8,
+               fig.height = 5  )
 
 library(pander)
 library(caTools)
@@ -54,8 +54,8 @@ ASTROPY_data <- data.table(readRDS(ASTROPYdb))
 NOAA_data    <- data.table(readRDS(OUTPUT_NOAA))
 
 
-ASTROPY_data <- ASTROPY_data[ Date > TSI_START ]
-NOAA_data    <- NOAA_data[    time > TSI_START ]
+ASTROPY_data <- ASTROPY_data[Date > TSI_START]
+NOAA_data    <- NOAA_data[   time > TSI_START]
 
 NOAA_data[, file     := NULL ]
 NOAA_data[, time_low := NULL ]
@@ -67,7 +67,7 @@ plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l")
 
 #+ include=FALSE
 
-stop()
+# stop()
 
 
 #' #### Interpolate TSI measurements to our dates ####
@@ -173,7 +173,7 @@ pander(summary(ASTROPY_data$Dist))
 #' #### Output data for use ####
 #+ include=TRUE, echo=FALSE
 myRtools::write_RDS(object = tsi_comb,
-                    file   = tsi_Rds_noaa  )
+                    file   = OUTPUT_NOAA_LAP  )
 
 #+ include=FALSE
 
