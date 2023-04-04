@@ -1,61 +1,68 @@
 #!/usr/bin/env Rscript
-# /* Copyright (C) 2022 Athanasios Natsis <natsisphysicist@gmail.com> */
+# /* Copyright (C) 2022-2023 Athanasios Natsis <natsisphysicist@gmail.com> */
 
-#### Prepare TSI data form NOAA
+#### Prepare TSI data from TSIS
 
+#'
+#' Get and parse TSI from TSIS.
+#'
+#' Data is stored asis.
+#'
+#' This is used in operational, to fill the most recent days,
+#' will be replaced by new NOAA data.
+#'
 
+## __ Set environment  ---------------------------------------------------------
 rm(list = (ls()[ls() != ""]))
 Sys.setenv(TZ = "UTC")
 options("width" = 130)
 tic <- Sys.time()
-Script.Name <- tryCatch({ funr::sys.script() },
-                        error = function(e) { cat(paste("\nUnresolved script name: ", e),"\n")
-                            return("Undefined R script name!!") })
+Script.Name <- "~/TSI/TSI_get_TSIS.R"
+
 if(!interactive()) {
-    pdf(  file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
-    sink( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
+    pdf( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
+    sink(file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
     filelock::lock(paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
 }
 
-
 library(data.table)
 
-
-####    Variables    ####
 source("~/TSI/DEFINITIONS.R")
 
 
-####    Get data    ####
+##  Get data  ------------------------------------------------------------------
 system( paste0("curl \"", FROM_TSIS, "\" > ", DEST_TSIS) )
 
 
-
-####    Parse data    ####
+##  Parse data  ----------------------------------------------------------------
 tsis_data <- fread(DEST_TSIS)
 
 ## fix names
 names(tsis_data)[grep("time",names(tsis_data))]    <- "Date"
 names(tsis_data)[grep( " \\(W/m\\^2\\)", names(tsis_data))] <-
-    sub(  " \\(W/m\\^2\\)", "", grep( " \\(W/m\\^2\\)", names(tsis_data), value = T))
+    sub(" \\(W/m\\^2\\)", "", grep( " \\(W/m\\^2\\)", names(tsis_data), value = TRUE))
 
-
-#' ignore zeros
+## ignore zeros
 tsis_data <- tsis_data[ tsi_1au >= 1 ]
 
 setorder(tsis_data, Date)
 
 tsis_data[ , provisional_flag := NULL ]
 
-wecare    <- grep( "true_earth" ,names(tsis_data), value = T, invert = T)
+wecare    <- grep("true_earth", names(tsis_data), value = TRUE, invert = TRUE)
 tsis_data <- tsis_data[, ..wecare ]
 
+## __ Inspect data  ------------------------------------------------------------
+hist(tsis_data$tsi_1au)
 
-hist( tsis_data$tsi_1au )
+plot(tsis_data$Date, tsis_data$tsi_1au, pch = ".",
+     xlab = "", ylab = "TSIS TSI")
 
-plot( tsis_data$Date, tsis_data$tsi_1au, pch = ".")
+cat("\nTSIS TSI range:", format(range(tsis_data$Date)), "\n")
 
+##  Save TSI data  -------------------------------------------------------------
 myRtools::write_RDS(object = tsis_data,
-                    file   = OUTPUT_TSIS  )
+                    file   = OUTPUT_TSIS)
 
 tac <- Sys.time()
 cat(sprintf("%s %s@%s %s %f mins\n\n",Sys.time(),Sys.info()["login"],Sys.info()["nodename"],Script.Name,difftime(tac,tic,units="mins")))

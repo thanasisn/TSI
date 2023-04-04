@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# /* Copyright (C) 2022 Athanasios Natsis <natsisphysicist@gmail.com> */
+# /* Copyright (C) 2022-2023 Athanasios Natsis <natsisphysicist@gmail.com> */
 
 #' ---
 #' title:  "TSI NOAA data preparation."
@@ -19,43 +19,43 @@
 
 #+ include=FALSE
 
+## __ Set environment  ---------------------------------------------------------
 rm(list = (ls()[ls() != ""]))
 Sys.setenv(TZ = "UTC")
 options("width" = 130)
 tic <- Sys.time()
-Script.Name <- tryCatch({ funr::sys.script() },
-                        error = function(e) { cat(paste("\nUnresolved script name: ", e),"\n")
-                            return("Undefined R script name!!") })
-if(!interactive()) {
-    pdf(  file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
-    sink( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
+Script.Name <- "~/TSI/TSI_NOAA_LAP.R"
+
+if (!interactive()) {
+    pdf( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
+    sink(file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
     filelock::lock(paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
 }
 
-
-
-
 library(knitr)
-opts_chunk$set(comment    = NA )
-opts_chunk$set(fig.width  = 8,
-               fig.height = 5  )
-
 library(pander)
 library(caTools)
-library(RAerosols)
+# library(RAerosols)
 library(data.table)
 
+opts_chunk$set(comment    = NA)
+opts_chunk$set(fig.width  = 8,
+               fig.height = 5 )
 
-####    Variables    ####
 source("~/TSI/DEFINITIONS.R")
 
 
+## __ Load data  ---------------------------------------------------------------
 ASTROPY_data <- data.table(readRDS(ASTROPYdb))
 NOAA_data    <- data.table(readRDS(OUTPUT_NOAA))
 
+stop()
 
 ASTROPY_data <- ASTROPY_data[Date > TSI_START]
 NOAA_data    <- NOAA_data[   time > TSI_START]
+
+
+
 
 NOAA_data[, file     := NULL ]
 NOAA_data[, time_low := NULL ]
@@ -194,9 +194,7 @@ pander(summary(data,   digits = 5))
 pander(summary(tsi_comb, digits = 5))
 
 
-
-#+ include=FALSE, echo=FALSE
-tac = Sys.time();
-cat(paste("\n  --  ",  Script.Name, " DONE  --  \n\n"))
-cat(sprintf("%s %-10s %-10s %-20s  %f mins\n\n",Sys.time(),Sys.info()["nodename"],Sys.info()["login"],Script.Name,difftime(tac,tic,units="mins")))
-write(sprintf("%s %-10s %-10s %-50s %f",Sys.time(),Sys.info()["nodename"],Sys.info()["login"],Script.Name,difftime(tac,tic,units="mins")),"~/Aerosols/run.log",append=T)
+#' **END**
+#+ include=T, echo=F
+tac <- Sys.time()
+cat(sprintf("%s %s@%s %s %f mins\n\n",Sys.time(),Sys.info()["login"],Sys.info()["nodename"],Script.Name,difftime(tac,tic,units="mins")))

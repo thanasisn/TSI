@@ -15,6 +15,8 @@ info "START :: $0 :: $* ::"
 
 
 
+## Operational data preperation
+
 info "Get TSI model from NOAA"
 Rscript "$(dirname "$0")/TSI_get_NOAA.R"
 
@@ -27,29 +29,26 @@ Rscript "$(dirname "$0")/TSI_get_TSIS.R"
 info "Prepare TSIS TSI for LAP"
 Rscript "$(dirname "$0")/TSI_TSIS_LAP.R"
 
-## Frozen data
+
+
+## Non operational data
+
 # info "Get TSI from PMOD"
 # Rscript "$(dirname "$0")/TSI_get_PMOD.R"
-
-info "Prepare PMOD TSI for LAP"
-Rscript "$(dirname "$0")/TSI_PMOD_LAP.R"
-
-## Frozen data
+# 
+# info "Prepare PMOD TSI for LAP"
+# Rscript "$(dirname "$0")/TSI_PMOD_LAP.R"
+# 
 # info "Get TSI from SORCE"
 # Rscript "$(dirname "$0")/TSI_get_SORCE.R"
+# 
+# info "Prepare TSIS SORCE for LAP"
+# Rscript "$(dirname "$0")/TSI_SORCE_LAP.R"
 
-info "Prepare TSIS SORCE for LAP"
-Rscript "$(dirname "$0")/TSI_SORCE_LAP.R"
-
-
+## Create a unified data table
 
 info "Prepare TSI for use"
 Rscript "$(dirname "$0")/prepare_TSI_LAP.R"
-
-
-
-
-
 
 
 ## end coding

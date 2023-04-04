@@ -1,3 +1,6 @@
+
 # TSI
 
-Get and prepare TSI data for different locations.
+- Download TSI from different sources
+- Prepare TSI for use in our location
+

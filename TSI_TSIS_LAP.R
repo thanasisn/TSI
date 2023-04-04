@@ -1,44 +1,46 @@
 #!/usr/bin/env Rscript
-# /* Copyright (C) 2022 Athanasios Natsis <natsisphysicist@gmail.com> */
+# /* Copyright (C) 2022-2023 Athanasios Natsis <natsisphysicist@gmail.com> */
 
+#### Prepare TSI data from TSIS
 
+#'
+#' Process TSI from TSIS.
+#'
+#' This is used in operational, to fill the most recent days,
+#' will be replaced by new NOAA data.
+#'
+
+## __ Set environment  ---------------------------------------------------------
 rm(list = (ls()[ls() != ""]))
 Sys.setenv(TZ = "UTC")
 options("width" = 130)
 tic <- Sys.time()
-Script.Name <- tryCatch({ funr::sys.script() },
-                        error = function(e) { cat(paste("\nUnresolved script name: ", e),"\n")
-                            return("Undefined R script name!!") })
+Script.Name <- "~/TSI/TSI_TSIS_LAP.R"
+
 if(!interactive()) {
-    pdf(  file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
-    sink( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
+    pdf( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
+    sink(file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
     filelock::lock(paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
 }
 
-
 library(knitr)
-opts_chunk$set( comment    = NA )
-opts_chunk$set( fig.width  = 8,
-                fig.height = 5  )
-
 library(pander)
 library(data.table)
 
+opts_chunk$set(comment    = NA )
+opts_chunk$set(fig.width  = 8,
+               fig.height = 5  )
 
-####    Variables    ####
 source("~/TSI/DEFINITIONS.R")
 
 
-####    Check if need to run    ####
-
-
-if ( !file.exists(OUTPUT_TSIS_LAP) |
-     file.mtime(ASTROPYdb)   > file.mtime(OUTPUT_TSIS_LAP) |
-     file.mtime(OUTPUT_TSIS) > file.mtime(OUTPUT_TSIS_LAP) ) {
-    cat("New data to parse\n\n")
+## __ Check if need to run  ----------------------------------------------------
+if (!file.exists(OUTPUT_TSIS_LAP) |
+    file.mtime(ASTROPYdb)   > file.mtime(OUTPUT_TSIS_LAP) |
+    file.mtime(OUTPUT_TSIS) > file.mtime(OUTPUT_TSIS_LAP) ) {
+    cat("\nNew data to parse\n\n")
 } else {
-    cat("NO new data to parse\n\n")
-    stop("NO new data to parse\n\n")
+    stop("\nNO new data to parse\n\n")
 }
 
 
@@ -47,14 +49,16 @@ if ( !file.exists(OUTPUT_TSIS_LAP) |
 ASTROPY_data <- data.table(readRDS(ASTROPYdb))
 TSIS_data    <- data.table(readRDS(OUTPUT_TSIS))
 
-ASTROPY_data <- ASTROPY_data[ Date > TSI_START ]
+## we want the most recent data from TSIS
+ASTROPY_data <- ASTROPY_data[ Date > TSI_START & Date > min(TSIS_data$Date)]
 TSIS_data    <- TSIS_data[    Date > TSI_START ]
 
+plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l",
+     xlab = "", ylab = "Distance [au]")
 
-plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l")
-
-
-#' #### Interpolate TSI measurements to our dates ####
+#'
+#' #### Interpolate TSI measurements to our dates
+#'
 #' Make functions from TSI measurements to match out data.
 #' Interpolate between measurements only.
 tsi_fun <- approxfun(x      = TSIS_data$Date,
@@ -63,26 +67,25 @@ tsi_fun <- approxfun(x      = TSIS_data$Date,
                      rule   = 1,
                      ties   = mean )
 
-
-
-
 unc_fuc <- approxfun(x      = TSIS_data$Date,
                      y      = TSIS_data$measurement_uncertainty_1au,
                      method = "linear",
                      rule   = 1,
                      ties   = mean )
 
+#'
+#' Interpolate the data, assuming that dates from Astropy are complete.
+#'
+tsi_all      <- tsi_fun(ASTROPY_data$Date)
+unc_all      <- unc_fuc(ASTROPY_data$Date)
 
-
-#' Interpolate the data, we have assumed that dates from Astropy are complete.
-tsi_all      <- tsi_fun( ASTROPY_data$Date )
-unc_all      <- unc_fuc( ASTROPY_data$Date )
-
+#'
 #' Compute TSI on earth using TSI at 1 au
+#'
 tsi_astropy  <- tsi_all / ( ASTROPY_data$Dist ^ 2 )
 
 
-#### Constructed TSI data for output --------------------------------
+##  Constructed TSI data for output  -------------------------------------------
 tsi_comb <- data.frame(
     Date          = ASTROPY_data$Date, # Dates from SORCE extended to today
     sun_dist      = ASTROPY_data$Dist, # Astropy sun distance not optimal
@@ -93,7 +96,7 @@ tsi_comb <- data.frame(
 tsi_comb <- tsi_comb[ !is.na(tsi_comb$tsi_1au), ]
 
 
-#' #### Output data for use ####
+##  Output TSIS data for use  --------------------------------------------------
 myRtools::write_RDS(object = tsi_comb,
                     file   = OUTPUT_TSIS_LAP  )
 
@@ -104,9 +107,9 @@ panderOptions("table.continues", '')
 panderOptions("graph.fontsize", 9)
 panderOptions("table.alignment.default", "right")
 
-
-
-#' ### Statistics on output data ###
+#'
+#' ### Statistics on output data
+#'
 pander(summary(tsi_comb, digits = 5))
 
 
