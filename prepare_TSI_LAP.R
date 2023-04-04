@@ -98,13 +98,15 @@ cat("\nTSIS TSI range:", format(range(TSIS$Date)), "\n")
 #'
 #' Combine data and get mean difference for common dates
 #'
+#+ include=T, echo=F
 tsi_merge <- merge(NOAA, TSIS, all = TRUE )
 rm(NOAA, TSIS)
 
+meandiff  <- mean(  tsi_merge$TSIextEARTH_NOAA - tsi_merge$TSIextEARTH_TSIS, na.rm = T)
+medidiff  <- median(tsi_merge$TSIextEARTH_NOAA - tsi_merge$TSIextEARTH_TSIS, na.rm = T)
 
-
-meandiff  <- mean(  tsi_merge$TSIextEARTH_comb - tsi_merge$TSIextEARTH_TSIS, na.rm = T)
-meaddiff  <- median(tsi_merge$TSIextEARTH_NOAA - tsi_merge$TSIextEARTH_TSIS, na.rm = T)
+stopifnot(is.na(medidiff) == FALSE)
+stopifnot(is.na(meandiff) == FALSE)
 
 ylim <- range(tsi_merge$tsi_1au_NOAA, tsi_merge$tsi_1au_TSIS, na.rm = T)
 plot(  tsi_merge$Date, tsi_merge$tsi_1au_NOAA, pch = ".", ylim = ylim, col = 2)
@@ -113,24 +115,25 @@ title(main = "Original data")
 
 
 plot(  tsi_merge$Date, tsi_merge$tsi_1au_NOAA,            pch = ".", ylim = ylim, col = 2)
-points(tsi_merge$Date, tsi_merge$tsi_1au_TSIS + meandiff, pch = ".", col = 3)
-title(main = "Moved data 1au")
+points(tsi_merge$Date, tsi_merge$tsi_1au_TSIS + medidiff, pch = ".", col = 3)
+title(main = "Moved data with median differance")
 
 
 ylim <- range(tsi_merge$TSIextEARTH_NOAA, tsi_merge$TSIextEARTH_TSIS + meandiff, na.rm = T)
 plot(  tsi_merge$Date, tsi_merge$TSIextEARTH_NOAA,            pch = ".", ylim = ylim, col = 2)
 points(tsi_merge$Date, tsi_merge$TSIextEARTH_TSIS + meandiff, pch = ".", col = 3)
-title(main = "Moved data")
+title(main = "Moved data with mean difference")
 
 
 
-####   Create composite output   ###############################################
+##  Create composite output  ---------------------------------------------------
+## move TSIS to NOAA values
 tsi_merge$tsi_1au_TSIS     <- tsi_merge$tsi_1au_TSIS     + meandiff
 tsi_merge$TSIextEARTH_TSIS <- tsi_merge$TSIextEARTH_TSIS + meandiff
 
 
 
-#' Fill with both data
+## Complete missing from NOAA with TSIS
 vec        <- !is.na(tsi_merge$TSIextEARTH_NOAA)
 tsi_merge[ vec, TSIextEARTH_comb  := TSIextEARTH_NOAA  ]
 tsi_merge[ vec, measur_error_comb := measur_error_NOAA ]
@@ -142,8 +145,7 @@ tsi_merge[ vec, TSIextEARTH_comb  := TSIextEARTH_TSIS  ]
 tsi_merge[ vec, tsi_1au_comb      := tsi_1au_TSIS      ]
 tsi_merge[ vec, measur_error_comb := measur_error_TSIS ]
 
-
-#+ include=FALSE
+## clean columns
 tsi_merge[, TSIextEARTH_NOAA   := NULL ]
 tsi_merge[, measur_error_NOAA  := NULL ]
 tsi_merge[, tsi_1au_NOAA       := NULL ]
@@ -152,20 +154,19 @@ tsi_merge[, measur_error_TSIS  := NULL ]
 tsi_merge[, tsi_1au_TSIS       := NULL ]
 
 
+
+
 pander(summary(tsi_merge))
 
-## TODO fill last data
 
 plot(tsi_merge$Date, tsi_merge$sun_dist,          pch = ".")
 plot(tsi_merge$Date, tsi_merge$TSIextEARTH_comb,  pch = ".")
 plot(tsi_merge$Date, tsi_merge$measur_error_comb, pch = ".")
 plot(tsi_merge$Date, tsi_merge$tsi_1au_comb,      pch = ".")
 
-#' #### Output data for use ####
-#+ include=TRUE, echo=FALSE
+##  Output composite data for use  ---------------------------------------------
 myRtools::write_RDS(object = tsi_merge,
                     file   = COMP_TSI  )
-#+ include=FALSE
 
 
 #' **END**

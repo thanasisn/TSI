@@ -103,7 +103,7 @@ tsi_comb <- data.frame(
                 nominal_dates         = ASTROPY_data$Date, # Dates from SORCE extended to today
                 sun_dist              = ASTROPY_data$Dist, # Astropy sun distance not optimal
                 # tsi_true_earth_compex = tsi_astropy,       # Original data and extension with Astropy distance
-                TSIextEARTH_comb      = tsi_astropy,       # Original data and extension with Astropy distance
+                TSIextEARTH_NOAA      = tsi_astropy,       # Original data and extension with Astropy distance
                 measur_error          = unc_all,           # Original data and extension of last value
                 tsi_1au               = tsi_all            # TSI at 1 au
             )
