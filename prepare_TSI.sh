@@ -1,9 +1,7 @@
 #!/bin/bash
 ## created on 2022-04-15
 
-#### This is for daily usage.
-## For building TSI data
-
+#### This is to build TSI data series for using with Broad-Band measurements
 
 info() { echo ; echo "$(date +%F_%T) :: $* " >&1; }
 mkdir -p "$(dirname "$0")/LOGs/"
@@ -15,7 +13,7 @@ info "START :: $0 :: $* ::"
 
 
 
-## Operational data preperation
+## Operational data preparation
 
 info "Get TSI model from NOAA"
 Rscript "$(dirname "$0")/TSI_get_NOAA.R"
