@@ -9,6 +9,8 @@
 #' This is used in operational, to fill the most recent days,
 #' will be replaced by new NOAA data.
 #'
+#' It expands TSI to the left using last value.
+#'
 #+ include=T, echo=F
 
 ## __ Set environment  ---------------------------------------------------------
@@ -21,7 +23,6 @@ Script.Name <- "~/TSI/TSI_TSIS_LAP.R"
 if(!interactive()) {
     pdf( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
     sink(file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
-    filelock::lock(paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
 }
 
 library(knitr)
@@ -65,14 +66,14 @@ plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l",
 tsi_fun <- approxfun(x      = TSIS_data$Date,
                      y      = TSIS_data$tsi_1au,
                      method = "linear",
-                     rule   = 1,
-                     ties   = mean )
+                     rule   = c(1, 2),  ## NA for right, closer constant fro left
+                     ties   = mean)
 
 unc_fuc <- approxfun(x      = TSIS_data$Date,
                      y      = TSIS_data$measurement_uncertainty_1au,
                      method = "linear",
-                     rule   = 1,
-                     ties   = mean )
+                     rule   = c(1, 2),  ## NA for right, closer constant fro left
+                     ties   = mean)
 
 #'
 #' Interpolate the data, assuming that dates from Astropy are complete.
@@ -101,7 +102,7 @@ tsi_comb <- tsi_comb[ !is.na(tsi_comb$tsi_1au), ]
 
 ##  Output TSIS data for use  --------------------------------------------------
 myRtools::write_RDS(object = tsi_comb,
-                    file   = OUTPUT_TSIS_LAP  )
+                    file   = OUTPUT_TSIS_LAP)
 
 
 panderOptions("table.style", 'rmarkdown')
