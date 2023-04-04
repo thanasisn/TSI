@@ -60,7 +60,6 @@ NOAA_data[, time_upp := NULL ]
 plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l",
      xlab = "", ylab = "Distance [au]")
 
-
 #'
 #' ## Interpolate TSI measurements to our dates
 #'
@@ -70,7 +69,7 @@ plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l",
 #'
 #' These data are the main TSI data we use.
 #' It is completed by TSIS for the current year.
-#
+#'
 #+ include = TRUE, echo = FALSE
 
 ## TSI
@@ -181,7 +180,7 @@ panderOptions("table.alignment.default", "right")
 #' ### Statistics on input data
 #'
 #+ include=TRUE, echo=FALSE
-pander(summary(data,   digits = 5))
+pander(summary(NOAA_data, digits = 5))
 
 #'
 #' ### Statistics on output data

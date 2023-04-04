@@ -9,6 +9,7 @@
 #' This is used in operational, to fill the most recent days,
 #' will be replaced by new NOAA data.
 #'
+#+ include=T, echo=F
 
 ## __ Set environment  ---------------------------------------------------------
 rm(list = (ls()[ls() != ""]))
@@ -43,8 +44,6 @@ if (!file.exists(OUTPUT_TSIS_LAP) |
     stop("\nNO new data to parse\n\n")
 }
 
-
-
 ## Load data
 ASTROPY_data <- data.table(readRDS(ASTROPYdb))
 TSIS_data    <- data.table(readRDS(OUTPUT_TSIS))
@@ -57,10 +56,12 @@ plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l",
      xlab = "", ylab = "Distance [au]")
 
 #'
-#' #### Interpolate TSI measurements to our dates
+#' ## Interpolate TSI measurements to our dates
 #'
 #' Make functions from TSI measurements to match out data.
 #' Interpolate between measurements only.
+#'
+#+ include=T, echo=F
 tsi_fun <- approxfun(x      = TSIS_data$Date,
                      y      = TSIS_data$tsi_1au,
                      method = "linear",
@@ -76,13 +77,15 @@ unc_fuc <- approxfun(x      = TSIS_data$Date,
 #'
 #' Interpolate the data, assuming that dates from Astropy are complete.
 #'
+#+ include=T, echo=F
 tsi_all      <- tsi_fun(ASTROPY_data$Date)
 unc_all      <- unc_fuc(ASTROPY_data$Date)
 
 #'
 #' Compute TSI on earth using TSI at 1 au
 #'
-tsi_astropy  <- tsi_all / ( ASTROPY_data$Dist ^ 2 )
+#+ include=T, echo=F
+tsi_astropy  <- tsi_all / (ASTROPY_data$Dist ^ 2)
 
 
 ##  Constructed TSI data for output  -------------------------------------------
@@ -110,6 +113,7 @@ panderOptions("table.alignment.default", "right")
 #'
 #' ### Statistics on output data
 #'
+#+ include=T, echo=F
 pander(summary(tsi_comb, digits = 5))
 
 

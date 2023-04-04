@@ -1,6 +1,5 @@
 #!/usr/bin/env Rscript
-# /* Copyright (C) 2022 Athanasios Natsis <natsisphysicist@gmail.com> */
-
+# /* Copyright (C) 2022-2023 Athanasios Natsis <natsisphysicist@gmail.com> */
 #' ---
 #' title:  "TSI data preparation."
 #' author: "Natsis Athanasios"
@@ -17,49 +16,47 @@
 #' date: "`r format(Sys.time(), '%F')`"
 #' ---
 
-#+ include=FALSE
-####  Clean environment  -------------------------------------------------------
+#+ include=T, echo=F
+
+## __ Set environment  ---------------------------------------------------------
 rm(list = (ls()[ls() != ""]))
 Sys.setenv(TZ = "UTC")
 tic <- Sys.time()
-Script.Name <- tryCatch({ funr::sys.script() },
-                        error = function(e) { cat(paste("\nUnresolved script name: ", e),"\n")
-                            return("Undefined R script name!!") })
-if(!interactive()) {
+Script.Name <- "~/TSI/prepare_TSI_LAP.R"
+
+if (!interactive()) {
     pdf( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
     sink(file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
     filelock::lock(paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
 }
 
-
-
-
-library(knitr)
-opts_chunk$set( comment    = NA    )
-opts_chunk$set( fig.width  = 8,
-                fig.height = 5     )
-opts_chunk$set( dev        = "png" )
-
-library(pander)    # just to plot tables
+library(pander)
 library(caTools)
 library(data.table)
+library(knitr)
 
+opts_chunk$set(comment    = NA    )
+opts_chunk$set(fig.width  = 8,
+               fig.height = 5     )
+opts_chunk$set(dev        = "png" )
 
-####    Variables    ####
 source("~/TSI/DEFINITIONS.R")
 
 
+## __ Load all data  -----------------------------------------------------------
+
+#'
+#' ## Available TSI data
+#'
+#+ include=T, echo=F
 NOAA <- readRDS(OUTPUT_NOAA)
 PMOD <- readRDS(OUTPUT_PMOD)
 SORC <- readRDS(OUTPUT_SORCE)
 TSIS <- readRDS(OUTPUT_TSIS)
 
-
-
 ylim <- range(NOAA$TSI,  PMOD$tsi_1au, SORC$tsi_1au, TSIS$tsi_1au)
 xlim <- range(NOAA$time, PMOD$Date, SORC$Date, TSIS$Date)
 xlim[1] <- TSI_START
-
 
 plot(  TSIS$Date, TSIS$tsi_1au, ylim = ylim, xlim = xlim, pch = ".")
 points(NOAA$time, NOAA$TSI,               pch = ".", col = 2 )
@@ -71,44 +68,42 @@ legend("bottom", ncol = 4,
        legend = c("TSIS", "NOAA", "SORC", "PMOD"),
        col    = c(1:4),
        pch    = 19, bty = "n", cex = .7)
-
-## USE TSIS and NOAA
-
+rm(NOAA, PMOD, SORC, TSIS)
 
 
-####    Load LAP Sun data    ###################################################
+
+#'
+#' ## Use TSI interpolated data from NOAA and TSIS
+#'
+#+ include=T, echo=F
+
+## __  Load LAP Sun data  ------------------------------------------------------
 NOAA         <- data.table(readRDS(OUTPUT_NOAA_LAP))
-names(NOAA)[names(NOAA) == "nominal_dates"] <- "Date"
 TSIS         <- data.table(readRDS(OUTPUT_TSIS_LAP))
-ASTROPY_data <- data.table(readRDS(ASTROPYdb))
+
+names(NOAA)[names(NOAA) == "nominal_dates"] <- "Date"
+names(NOAA)[names(NOAA) == "time"         ] <- "Date"
+names(NOAA)[names(NOAA) == "TSIextEARTH"  ] <- "TSIextEARTH_NOAA"
+names(TSIS)[names(TSIS) == "TSIextEARTH"  ] <- "TSIextEARTH_TSIS"
+names(NOAA)[names(NOAA) == "measur_error" ] <- "measur_error_NOAA"
+names(TSIS)[names(TSIS) == "measur_error" ] <- "measur_error_TSIS"
+names(NOAA)[names(NOAA) == "tsi_1au"      ] <- "tsi_1au_NOAA"
+names(TSIS)[names(TSIS) == "tsi_1au"      ] <- "tsi_1au_TSIS"
 
 
-range(NOAA$Date)
-range(TSIS$Date)
+cat("\nNOAA TSI range:", format(range(NOAA$Date)), "\n")
+cat("\nTSIS TSI range:", format(range(TSIS$Date)), "\n")
 
 
-names(NOAA)[names(NOAA) == "time"] <- "Date"
-
-NOAA         <- NOAA[ Date >= TSI_START, ]
-TSIS         <- TSIS[ Date >= TSI_START, ]
-ASTROPY_data <- ASTROPY_data[ Date >= TSI_START, ]
-
-
-names(NOAA)[names(NOAA) == "TSIextEARTH" ] <- "TSIextEARTH_NOAA"
-names(TSIS)[names(TSIS) == "TSIextEARTH" ] <- "TSIextEARTH_TSIS"
-names(NOAA)[names(NOAA) == "measur_error"] <- "measur_error_NOAA"
-names(TSIS)[names(TSIS) == "measur_error"] <- "measur_error_TSIS"
-names(NOAA)[names(NOAA) == "tsi_1au"     ] <- "tsi_1au_NOAA"
-names(TSIS)[names(TSIS) == "tsi_1au"     ] <- "tsi_1au_TSIS"
-
-
-#' combine data and get mean diff
-tsi_merge <- merge(NOAA, TSIS, all = T )
-rm(NOAA, TSIS, PMOD, SORC)
+#'
+#' Combine data and get mean difference for common dates
+#'
+tsi_merge <- merge(NOAA, TSIS, all = TRUE )
+rm(NOAA, TSIS)
 
 
 
-meandiff  <- mean(  tsi_merge$TSIextEARTH_NOAA - tsi_merge$TSIextEARTH_TSIS, na.rm = T)
+meandiff  <- mean(  tsi_merge$TSIextEARTH_comb - tsi_merge$TSIextEARTH_TSIS, na.rm = T)
 meaddiff  <- median(tsi_merge$TSIextEARTH_NOAA - tsi_merge$TSIextEARTH_TSIS, na.rm = T)
 
 ylim <- range(tsi_merge$tsi_1au_NOAA, tsi_merge$tsi_1au_TSIS, na.rm = T)
