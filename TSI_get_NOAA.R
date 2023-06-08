@@ -18,7 +18,7 @@ options("width" = 130)
 tic <- Sys.time()
 Script.Name <- "~/TSI/TSI_get_NOAA.R"
 
-if(!interactive()) {
+if (!interactive()) {
     pdf(  file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
     sink( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
     filelock::lock(paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
