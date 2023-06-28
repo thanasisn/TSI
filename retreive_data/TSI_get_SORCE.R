@@ -1,52 +1,56 @@
 #!/usr/bin/env Rscript
 # /* Copyright (C) 2022 Athanasios Natsis <natsisphysicist@gmail.com> */
 
-#### Prepare TSI data form NOAA
+#### Prepare TSI data form SORCE
 
+#'
+#' Data are not updating any more.
+#'
 
 rm(list = (ls()[ls() != ""]))
 Sys.setenv(TZ = "UTC")
 options("width" = 130)
 tic <- Sys.time()
-Script.Name <- tryCatch({ funr::sys.script() },
-                        error = function(e) { cat(paste("\nUnresolved script name: ", e),"\n")
-                            return("Undefined R script name!!") })
-if(!interactive()) {
-    pdf(  file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
-    sink( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
-    filelock::lock(paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
+Script.Name <- "~/TSI/retreive_data/TSI_get_SORCE.R"
+
+if (!interactive()) {
+    pdf( file = paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".pdf", Script.Name))))
+    sink(file = paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
+    filelock::lock(paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
 }
 
 
 library(data.table)
 
 
-####    Variables    ####
+##  Variables  -----------------------------------------------------------------
 source("~/TSI/DEFINITIONS.R")
 
 
-####    Get data    ####
-system( paste0("curl \"", FROM_SORCE, "\" > ", DEST_SORCE) )
+##  Get data  ------------------------------------------------------------------
+system(paste0("curl \"", FROM_SORCE, "\" > ", DEST_SORCE))
 
 
 
-####    Parse data    ####
+##  Parse data  ----------------------------------------------------------------
 SORCE_data <- fread(DEST_SORCE)
 
-## fix names
+## Fix variables names
 names(SORCE_data)[grep("time",names(SORCE_data))]    <- "Date"
-names(SORCE_data)[grep( " \\(W/m\\^2\\)", names(SORCE_data))] <-
-    sub(  " \\(W/m\\^2\\)", "", grep( " \\(W/m\\^2\\)", names(SORCE_data), value = T))
+names(SORCE_data)[grep(" \\(W/m\\^2\\)", names(SORCE_data))] <-
+    sub(" \\(W/m\\^2\\)", "", grep(" \\(W/m\\^2\\)", names(SORCE_data), value = T))
 
-
-#' ignore zeros
+## Drop zero values
 SORCE_data <- SORCE_data[ tsi_1au >= 1 ]
 
 setorder(SORCE_data, Date)
 
 
-wecare    <- grep( "true_earth" ,names(SORCE_data), value = T, invert = T)
-SORCE_data <- SORCE_data[, ..wecare ]
+
+
+
+wecare    <- grep("true_earth", names(SORCE_data), value = T, invert = T)
+SORCE_data <- SORCE_data[, ..wecare]
 
 
 hist( SORCE_data$tsi_1au )
