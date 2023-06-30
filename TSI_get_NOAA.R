@@ -19,9 +19,9 @@ tic <- Sys.time()
 Script.Name <- "~/TSI/TSI_get_NOAA.R"
 
 if (!interactive()) {
-    pdf(  file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
-    sink( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
-    filelock::lock(paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
+    pdf( file = paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".pdf", Script.Name))))
+    sink(file = paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
+    filelock::lock(paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
 }
 
 library(data.table)
@@ -82,6 +82,7 @@ plot(gather$time, gather$TSI, pch = ".",
      xlab = "", ylab = "NOAA TSI")
 
 cat("\nNOAA TSI range:", format(range(gather$time)), "\n")
+
 
 ##  Save TSI data  -------------------------------------------------------------
 myRtools::write_RDS(object = gather,

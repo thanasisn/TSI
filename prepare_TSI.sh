@@ -12,21 +12,24 @@ exec 2> >(tee -i "${ERR_FILE}" >&2)
 info "START :: $0 :: $* ::"
 
 
-
+R -e "rmarkdown::render(input       = \"~/TSI/TSI_NOAA_LAP.R\",
+                        output_file = \"TSI_NOAA_LAP.pdf\",
+                        output_dir  = \"~/TSI/REPORTS\")
+"
+exit
 ## Operational data preparation
 
 info "Get TSI model from NOAA"
 Rscript "$(dirname "$0")/TSI_get_NOAA.R"
 
-info "Prepare NOAA TSI for LAP"
-Rscript "$(dirname "$0")/TSI_NOAA_LAP.R"
-
 info "Get TSI from TSIS"
 Rscript "$(dirname "$0")/TSI_get_TSIS.R"
 
+info "Prepare NOAA TSI for LAP"
+Rscript "$(dirname "$0")/TSI_NOAA_LAP.R"
+
 info "Prepare TSIS TSI for LAP"
 Rscript "$(dirname "$0")/TSI_TSIS_LAP.R"
-
 
 
 ## Non operational data

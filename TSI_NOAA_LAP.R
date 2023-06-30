@@ -53,9 +53,9 @@ ASTROPY_data <- ASTROPY_data[Date > TSI_START & Date <= max(NOAA_data$time)]
 NOAA_data    <- NOAA_data[   time > TSI_START]
 
 ## remove columns
-NOAA_data[, file     := NULL ]
-NOAA_data[, time_low := NULL ]
-NOAA_data[, time_upp := NULL ]
+NOAA_data[, file     := NULL]
+NOAA_data[, time_low := NULL]
+NOAA_data[, time_upp := NULL]
 
 plot(ASTROPY_data$Date, ASTROPY_data$Dist, "l",
      xlab = "", ylab = "Distance [au]")
