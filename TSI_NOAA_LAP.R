@@ -34,7 +34,6 @@ if (!interactive()) {
 library(knitr)
 library(pander)
 library(caTools)
-# library(RAerosols)
 library(data.table)
 
 opts_chunk$set(dev        = "png")
@@ -100,13 +99,21 @@ tsi_astropy  <- tsi_all / (ASTROPY_data$Dist^2)
 
 ##  Constructed TSI data for output  -------------------------------------------
 tsi_comb <- data.frame(
-                nominal_dates         = ASTROPY_data$Date, # Dates from SORCE extended to today
-                sun_dist              = ASTROPY_data$Dist, # Astropy sun distance not optimal
-                # tsi_true_earth_compex = tsi_astropy,       # Original data and extension with Astropy distance
-                TSIextEARTH_NOAA      = tsi_astropy,       # Original data and extension with Astropy distance
-                measur_error          = unc_all,           # Original data and extension of last value
-                tsi_1au               = tsi_all            # TSI at 1 au
+                nominal_dates    = ASTROPY_data$Date, # Dates from SORCE extended to today
+                sun_dist         = ASTROPY_data$Dist, # Astropy sun distance not optimal
+                TSIextEARTH_NOAA = tsi_astropy,       # Original data and extension with Astropy distance
+                measur_error     = unc_all,           # Original data and extension of last value
+                tsi_1au          = tsi_all            # TSI at 1 au
             )
+## Drop missing dates
+tsi_comb <- tsi_comb[!is.na(tsi_comb$nominal_dates), ]
+
+
+xxx  <- do.call(cbind, lapply(tsi_comb, summary))
+xxxx <- data.frame(xxx)
+row.names(xxxx) == "NA's"
+
+xxxx$nominal_dates <- as.POSIXct(xxxx$nominal_dates,origin = "1970-01-01")
 
 
 par(mar = c(2, 4, 2, 1))

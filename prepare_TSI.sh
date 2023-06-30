@@ -4,19 +4,15 @@
 #### This is to build TSI data series for using with Broad-Band measurements
 
 info() { echo ; echo "$(date +%F_%T) :: $* " >&1; }
-mkdir -p "$(dirname "$0")/LOGs/"
-LOG_FILE="$(dirname "$0")/LOGs/$(basename "$0")_$(date +%F_%T).log"
-ERR_FILE="$(dirname "$0")/LOGs/$(basename "$0")_$(date +%F_%T).err"
+mkdir -p "$(dirname "$0")/REPORTS/LOGs/"
+LOG_FILE="$(dirname "$0")/REPORTS/LOGs/$(basename "$0")_$(date +%F_%T).log"
+ERR_FILE="$(dirname "$0")/REPORTS/LOGs/$(basename "$0")_$(date +%F_%T).err"
 exec  > >(tee -i "${LOG_FILE}")
 exec 2> >(tee -i "${ERR_FILE}" >&2)
 info "START :: $0 :: $* ::"
 
 
-R -e "rmarkdown::render(input       = \"~/TSI/TSI_NOAA_LAP.R\",
-                        output_file = \"TSI_NOAA_LAP.pdf\",
-                        output_dir  = \"~/TSI/REPORTS\")
-"
-exit
+
 ## Operational data preparation
 
 info "Get TSI model from NOAA"
@@ -26,11 +22,20 @@ info "Get TSI from TSIS"
 Rscript "$(dirname "$0")/TSI_get_TSIS.R"
 
 info "Prepare NOAA TSI for LAP"
-Rscript "$(dirname "$0")/TSI_NOAA_LAP.R"
+# ## just run it 
+# Rscript "$(dirname "$0")/TSI_NOAA_LAP.R"
+## or build the report
+R -e "rmarkdown::render(input       = \"~/TSI/TSI_NOAA_LAP.R\",
+                        output_file = \"TSI_NOAA_LAP.pdf\",
+                        output_dir  = \"~/TSI/REPORTS\")"
+
 
 info "Prepare TSIS TSI for LAP"
-Rscript "$(dirname "$0")/TSI_TSIS_LAP.R"
+# Rscript "$(dirname "$0")/TSI_TSIS_LAP.R"
 
+R -e "rmarkdown::render(input       = \"~/TSI/TSI_TSIS_LAP.R\",
+                        output_file = \"TSI_TSIS_LAP.pdf\",
+                        output_dir  = \"~/TSI/REPORTS\")"
 
 ## Non operational data
 
@@ -46,10 +51,16 @@ Rscript "$(dirname "$0")/TSI_TSIS_LAP.R"
 # info "Prepare TSIS SORCE for LAP"
 # Rscript "$(dirname "$0")/TSI_SORCE_LAP.R"
 
-## Create a unified data table
+
+## Create a unified long term data series
 
 info "Prepare TSI for use"
-Rscript "$(dirname "$0")/prepare_TSI_LAP.R"
+# Rscript "$(dirname "$0")/prepare_TSI_LAP.R"
+
+R -e "rmarkdown::render(input       = \"~/TSI/prepare_TSI_LAP.R\",
+                        output_file = \"prepare_TSI_LAP.pdf\",
+                        output_dir  = \"~/TSI/REPORTS\")"
+
 
 
 ## end coding

@@ -25,9 +25,9 @@ tic <- Sys.time()
 Script.Name <- "~/TSI/prepare_TSI_LAP.R"
 
 if (!interactive()) {
-    pdf( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
-    sink(file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
-    filelock::lock(paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
+    pdf( file = paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".pdf", Script.Name))))
+    sink(file = paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
+    filelock::lock(paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
 }
 
 library(pander)
@@ -79,8 +79,8 @@ rm(NOAA, PMOD, SORC, TSIS)
 #+ include=T, echo=F
 
 ## __  Load LAP Sun data  ------------------------------------------------------
-NOAA         <- data.table(readRDS(OUTPUT_NOAA_LAP))
-TSIS         <- data.table(readRDS(OUTPUT_TSIS_LAP))
+NOAA    <- data.table(readRDS(OUTPUT_NOAA_LAP))
+TSIS    <- data.table(readRDS(OUTPUT_TSIS_LAP))
 
 names(NOAA)[names(NOAA) == "nominal_dates"] <- "Date"
 names(NOAA)[names(NOAA) == "time"         ] <- "Date"
