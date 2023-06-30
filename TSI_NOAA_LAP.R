@@ -43,9 +43,19 @@ opts_chunk$set(fig.width  = 8,
 
 source("~/TSI/DEFINITIONS.R")
 
+# TEST <- TRUE
+TEST <- FALSE
+
+
 ## __ Load data  ---------------------------------------------------------------
 ASTROPY_data <- data.table(readRDS(ASTROPYdb))
 NOAA_data    <- data.table(readRDS(OUTPUT_NOAA))
+
+if (TEST) {
+    years <- c(2022, 2023)
+    ASTROPY_data <- ASTROPY_data[year(Date) %in% years]
+    NOAA_time    <- NOAA_data[year(time) %in% years]
+}
 
 ## NOAA data does not extend to now
 ASTROPY_data <- ASTROPY_data[Date > TSI_START & Date <= max(NOAA_data$time)]
@@ -109,11 +119,8 @@ tsi_comb <- data.frame(
 tsi_comb <- tsi_comb[!is.na(tsi_comb$nominal_dates), ]
 
 
-xxx  <- do.call(cbind, lapply(tsi_comb, summary))
-xxxx <- data.frame(xxx)
-row.names(xxxx) == "NA's"
-
-xxxx$nominal_dates <- as.POSIXct(xxxx$nominal_dates,origin = "1970-01-01")
+meta_summary <- data.frame(do.call(cbind, lapply(tsi_comb, summary)))
+meta_summary$nominal_dates <- as.POSIXct(meta_summary$nominal_dates,origin = "1970-01-01")
 
 
 par(mar = c(2, 4, 2, 1))
@@ -176,6 +183,12 @@ pander(summary(ASTROPY_data$Dist))
 #+ include=TRUE, echo=FALSE
 myRtools::write_RDS(object = tsi_comb,
                     file   = OUTPUT_NOAA_LAP)
+
+myRtools::write_RDS(object = meta_summary,
+                    clean  = TRUE,
+                    file   = paste0("~/TSI/tsi_metadata/", basename(sub("\\.R$","_data_summary.Rds", Script.Name))))
+
+
 
 panderOptions("table.style", 'rmarkdown')
 panderOptions("table.split.table", 100 )

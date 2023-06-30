@@ -16,10 +16,10 @@ info "START :: $0 :: $* ::"
 ## Operational data preparation
 
 info "Get TSI model from NOAA"
-Rscript "$(dirname "$0")/TSI_get_NOAA.R"
+Rscript "$(dirname "$0")/retreive_data/TSI_get_NOAA.R"
 
 info "Get TSI from TSIS"
-Rscript "$(dirname "$0")/TSI_get_TSIS.R"
+Rscript "$(dirname "$0")/retreive_data/TSI_get_TSIS.R"
 
 info "Prepare NOAA TSI for LAP"
 # ## just run it 
@@ -32,7 +32,6 @@ R -e "rmarkdown::render(input       = \"~/TSI/TSI_NOAA_LAP.R\",
 
 info "Prepare TSIS TSI for LAP"
 # Rscript "$(dirname "$0")/TSI_TSIS_LAP.R"
-
 R -e "rmarkdown::render(input       = \"~/TSI/TSI_TSIS_LAP.R\",
                         output_file = \"TSI_TSIS_LAP.pdf\",
                         output_dir  = \"~/TSI/REPORTS\")"
@@ -56,7 +55,6 @@ R -e "rmarkdown::render(input       = \"~/TSI/TSI_TSIS_LAP.R\",
 
 info "Prepare TSI for use"
 # Rscript "$(dirname "$0")/prepare_TSI_LAP.R"
-
 R -e "rmarkdown::render(input       = \"~/TSI/prepare_TSI_LAP.R\",
                         output_file = \"prepare_TSI_LAP.pdf\",
                         output_dir  = \"~/TSI/REPORTS\")"
