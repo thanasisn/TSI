@@ -6,16 +6,16 @@
 rm(list = (ls()[ls() != ""]))
 Sys.setenv(TZ = "UTC")
 tic <- Sys.time()
-Script.Name <- "~/CS_id/tools/List_dependencies.R"
+Script.Name <- "~/TSI/List_dependencies.R"
 
 
 ## __ Describe environment -----------------------------------------------------
-env_info <- "~/CS_id/Dependencies.md"
+env_info <- "~/TSI/Dependencies.md"
 
-cat("\n## CS_id Current Running Environment\n", file = env_info)
+cat("\n## TSI Current Running Environment\n", file = env_info)
 cat("\n", R.version.string, "\n", file = env_info, append = TRUE)
 
-pkgs <- renv::dependencies("~/CS_id")
+pkgs <- renv::dependencies("~/TSI")
 for (ap in unique(pkgs$Package)) {
     cat(sprintf("%16s:  %8s\n", ap, packageVersion(ap)), file = env_info, append = TRUE)
 }
