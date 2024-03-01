@@ -17,8 +17,18 @@ cat("\n", R.version.string, "\n", file = env_info, append = TRUE)
 
 pkgs <- renv::dependencies("~/TSI")
 for (ap in unique(pkgs$Package)) {
-    cat(sprintf("%16s:  %8s\n", ap, packageVersion(ap)), file = env_info, append = TRUE)
+  cat(sprintf("%16s:  %8s\n", ap, packageVersion(ap)), file = env_info, append = TRUE)
 }
+
+cat(readLines(env_info),sep = "\n")
+
+
+
+function(source, output) {
+  require(renv)
+}
+
+
 
 
 tac <- Sys.time()
