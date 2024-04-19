@@ -27,13 +27,16 @@ Script.Name <- "~/TSI/prepare_TSI_LAP.R"
 if (!interactive()) {
     pdf( file = paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".pdf", Script.Name))))
     sink(file = paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
-    filelock::lock(paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
+    filelock::lock(paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".lock", Script.Name))))
 }
 
 library(pander    , quietly = TRUE, warn.conflicts = FALSE)
 library(caTools   , quietly = TRUE, warn.conflicts = FALSE)
 library(data.table, quietly = TRUE, warn.conflicts = FALSE)
 library(knitr     , quietly = TRUE, warn.conflicts = FALSE)
+library(arrow, quietly = TRUE, warn.conflicts = FALSE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+
 
 opts_chunk$set(comment    = NA    )
 opts_chunk$set(fig.width  = 8,
@@ -195,15 +198,16 @@ myRtools::write_RDS(object = tsi_merge,
                     file   = COMP_TSI)
 
 
-##  Data set output  -----------------------------------------------------------
+## Parquet data set output  ----------------------------------------------------
 
-## copy from BB not need to test efficiency
+tsi_merge<-readRDS(COMP_TSI)
+
+## copied from BB not tried to test efficiency
 DB_compress_codec <- "brotli"
 DB_compress_level <- 5
 
-library(arrow, quietly = TRUE, warn.conflicts = FALSE)
-
-write_dataset(., path           = COMP_TSI_dataset,
+write_dataset(dataset           = tsi_merge[, year := year(Date)],
+              path              = COMP_TSI_dataset,
               format            = "parquet",
               compression       = DB_compress_codec,
               compression_level = DB_compress_level,
