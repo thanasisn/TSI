@@ -30,10 +30,10 @@ if (!interactive()) {
     filelock::lock(paste0("~/TSI/REPORTS/RUNTIME/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
 }
 
-library(pander)
-library(caTools)
-library(data.table)
-library(knitr)
+library(pander    , quietly = TRUE, warn.conflicts = FALSE)
+library(caTools   , quietly = TRUE, warn.conflicts = FALSE)
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr     , quietly = TRUE, warn.conflicts = FALSE)
 
 opts_chunk$set(comment    = NA    )
 opts_chunk$set(fig.width  = 8,
@@ -193,6 +193,24 @@ cat("\n\n")
 ##  Output composite data for use  ---------------------------------------------
 myRtools::write_RDS(object = tsi_merge,
                     file   = COMP_TSI)
+
+
+##  Data set output  -----------------------------------------------------------
+
+## copy from BB not need to test efficiency
+DB_compress_codec <- "brotli"
+DB_compress_level <- 5
+
+library(arrow, quietly = TRUE, warn.conflicts = FALSE)
+
+write_dataset(., path           = COMP_TSI_dataset,
+              format            = "parquet",
+              compression       = DB_compress_codec,
+              compression_level = DB_compress_level,
+              partitioning      = c("year"),
+              hive_style        = FALSE)
+cat("Written dataset: ", COMP_TSI_dataset, "\n")
+
 
 
 #' **END**

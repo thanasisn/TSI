@@ -8,7 +8,7 @@ ASTROPYdb        <- "/home/athan/DATA_RAW/SUN/Astropy_LAP.Rds"
 
 ## TSI data to use by other ----------------------------------------------------
 COMP_TSI         <- "~/DATA/SUN/TSI_COMPOSITE.Rds"
-
+COMP_TSI_dataset <- "~/DATA/SUN/TSI_COMPOSITE_dataset"
 
 ##  NOAA TSI  ------------------------------------------------------------------
 ##  https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.ncdc:C00828
