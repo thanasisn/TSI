@@ -200,20 +200,22 @@ myRtools::write_RDS(object = tsi_merge,
 
 ## Parquet data set output  ----------------------------------------------------
 
-tsi_merge<-readRDS(COMP_TSI)
-
-## copied from BB not tried to test efficiency
-DB_compress_codec <- "brotli"
-DB_compress_level <- 5
-
-write_dataset(dataset           = tsi_merge[, year := year(Date)],
-              path              = COMP_TSI_dataset,
-              format            = "parquet",
-              compression       = DB_compress_codec,
-              compression_level = DB_compress_level,
-              partitioning      = c("year"),
-              hive_style        = FALSE)
-cat("Written dataset: ", COMP_TSI_dataset, "\n")
+# # tsi_merge <- readRDS(COMP_TSI)
+#
+# ## copied from BB not tried to test efficiency
+# DB_compress_codec <- "brotli"
+# DB_compress_level <- 5
+#
+# tsi_merge[, year := year(Date)]
+#
+# write_dataset(dataset           = tsi_merge,
+#               path              = COMP_TSI_dataset,
+#               format            = "parquet",
+#               compression       = DB_compress_codec,
+#               compression_level = DB_compress_level,
+#               partitioning      = c("year"),
+#               hive_style        = FALSE)
+# cat("Written dataset: ", COMP_TSI_dataset, "\n")
 
 
 
