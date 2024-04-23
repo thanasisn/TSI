@@ -7,16 +7,35 @@
 #' affiliation: "Laboratory of Atmospheric Physics"
 #' abstract: "Read original total solar irradiance data from NOAA
 #'            last measurement as the Solar Constant."
+#'
 #' output:
+#'   bookdown::pdf_document2:
+#'     number_sections: no
+#'     fig_caption:     no
+#'     keep_tex:        yes
+#'     latex_engine:    xelatex
+#'     toc:             yes
+#'     toc_depth:       4
+#'     fig_width:       7
+#'     fig_height:      4.5
 #'   html_document:
-#'     toc: true
-#'     fig_width:  9
-#'     fig_height: 5
-#'   pdf_document:
+#'     toc:             true
+#'     keep_md:         yes
+#'     fig_width:       7
+#'     fig_height:      4.5
+#'
 #' date: "`r format(Sys.time(), '%F')`"
 #' ---
 
-#+ include=T, echo=F
+#+ echo=FALSE, include=TRUE
+knitr::opts_chunk$set(comment    = ""       )
+knitr::opts_chunk$set(dev        = c("pdf", "png"))
+# knitr::opts_chunk$set(dev        = "png"    )
+knitr::opts_chunk$set(out.width  = "100%"   )
+knitr::opts_chunk$set(fig.align  = "center" )
+knitr::opts_chunk$set(cache      =  FALSE   )  ## !! breaks calculations
+knitr::opts_chunk$set(fig.pos    = '!h'     )
+
 
 ## __ Set environment  ---------------------------------------------------------
 rm(list = (ls()[ls() != ""]))
@@ -27,7 +46,6 @@ Script.Name <- "~/TSI/TSI_NOAA_LAP.R"
 
 if (!interactive()) {
     pdf( file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".pdf", Script.Name))))
-    sink(file = paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".out", Script.Name))), split = TRUE)
     filelock::lock(paste0("~/TSI/REPORTS/", basename(sub("\\.R$",".lock", Script.Name))), timeout = 0)
 }
 
@@ -36,10 +54,6 @@ library(pander)
 library(caTools)
 library(data.table)
 
-opts_chunk$set(dev        = "png")
-opts_chunk$set(comment    = NA   )
-opts_chunk$set(fig.width  = 8,
-               fig.height = 5    )
 
 source("~/TSI/DEFINITIONS.R")
 
@@ -51,6 +65,7 @@ TEST <- FALSE
 ASTROPY_data <- data.table(readRDS(ASTROPYdb))
 NOAA_data    <- data.table(readRDS(OUTPUT_NOAA))
 
+
 if (TEST) {
     years <- c(2022, 2023)
     ASTROPY_data <- ASTROPY_data[year(Date) %in% years]
@@ -60,6 +75,22 @@ if (TEST) {
 ## NOAA data does not extend to now
 ASTROPY_data <- ASTROPY_data[Date > TSI_START & Date <= max(NOAA_data$time)]
 NOAA_data    <- NOAA_data[   time > TSI_START]
+
+
+# hist(as.numeric(diff(NOAA_data$time))/3600)
+
+
+## plot NOAA for thesis
+
+#+ P_NOAA_TSI, include=T, echo=F
+par("mar" = c(2.5, 4.5, 1.5, 1.5))
+plot(NOAA_data[, .(time, TSI)],
+     xlab = "",
+     ylab = bquote(TSI ~ group("[", W/m^2,"]")),
+     pch = 19, cex = .2)
+
+
+
 
 ## remove columns
 NOAA_data[, file     := NULL]
@@ -134,11 +165,11 @@ plot( ASTROPY_data$Date, tsi_all, "l", xlab = "", ylab = "TSI (Interpolated) wat
 lines(ASTROPY_data$Date, runmean(tsi_all, 15000), col = 5, lwd = 3)
 qq <- quantile(tsi_all, na.rm = T)
 
-abline( h = qq[3], col = 'orange',lwd = 3 )
-abline( h = qq[2], col = 'green', lwd = 2 )
-abline( h = qq[4], col = 'green', lwd = 2 )
-abline( h = qq[1], col = 'red',   lwd = 1 )
-abline( h = qq[5], col = 'red',   lwd = 1 )
+abline(h = qq[3], col = 'orange', lwd = 3)
+abline(h = qq[2], col = 'green',  lwd = 2)
+abline(h = qq[4], col = 'green',  lwd = 2)
+abline(h = qq[1], col = 'red',    lwd = 1)
+abline(h = qq[5], col = 'red',    lwd = 1)
 
 text(ASTROPY_data$Date[1], y = qq[3],
      as.character(round(qq[3],1)), adj = c(0,1.5), col = 'orange', lwd = 4 )
