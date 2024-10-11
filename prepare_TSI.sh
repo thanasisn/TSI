@@ -12,14 +12,13 @@ exec 2> >(tee -i "${ERR_FILE}" >&2)
 info "START :: $0 :: $* ::"
 
 
-
 ## Operational data preparation
 
 info "Get TSI model from NOAA"
-Rscript "$(dirname "$0")/retreive_data/TSI_get_NOAA.R"
+Rscript "$HOME/TSI/retreive_data/TSI_get_NOAA.R"
 
 info "Get TSI from TSIS"
-Rscript "$(dirname "$0")/retreive_data/TSI_get_TSIS.R"
+Rscript "$HOME/TSI/retreive_data/TSI_get_TSIS.R"
 
 info "Prepare NOAA TSI for LAP"
 # ## just run it 
